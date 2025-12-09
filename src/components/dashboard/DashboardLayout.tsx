@@ -11,16 +11,13 @@ import {
   X,
   Bell,
   PlusCircle,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { AddExpenseModal } from "@/components/expenses/AddExpenseModal";
-import { CreateGroupModal } from "@/components/groups/CreateGroupModal";
-import { useGroups } from "@/hooks/useGroups";
-import { useExpenses } from "@/hooks/useExpenses";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -49,16 +46,17 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   };
 
   const userName = user.user_metadata?.full_name || user.email?.split("@")[0] || "User";
+  const userInitial = userName.charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -66,21 +64,24 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-300 lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 w-72 bg-white/80 backdrop-blur-xl border-r border-border/50 transform transition-transform duration-300 lg:translate-x-0 shadow-xl",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between p-6 border-b border-border">
-            <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="p-2 rounded-xl gradient-primary">
-                <Receipt className="h-5 w-5 text-primary-foreground" />
+          <div className="flex items-center justify-between p-6 border-b border-border/50">
+            <Link to="/dashboard" className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
+                <Receipt className="h-6 w-6 text-white" />
               </div>
-              <span className="font-semibold text-lg text-foreground">SplitWise Pro</span>
+              <div>
+                <span className="font-bold text-xl text-foreground block leading-none">SplitXo</span>
+                <span className="text-xs text-muted-foreground">Split Smart, Move Fast.</span>
+              </div>
             </Link>
             <button
-              className="lg:hidden text-muted-foreground hover:text-foreground"
+              className="lg:hidden text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-muted"
               onClick={() => setSidebarOpen(false)}
             >
               <X className="h-5 w-5" />
@@ -88,7 +89,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-2">
             {navItems.map((item) => {
               const isActive = location.pathname === item.href;
               return (
@@ -96,34 +97,37 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
                   key={item.href}
                   to={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                    "flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 group relative",
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-md"
-                      : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <item.icon className="h-5 w-5" />
-                  {item.label}
+                  <item.icon className={cn("h-5 w-5 transition-transform group-hover:scale-110", isActive && "text-white")} />
+                  <span className="flex-1">{item.label}</span>
+                  {isActive && (
+                    <ChevronRight className="h-4 w-4 text-white" />
+                  )}
                 </Link>
               );
             })}
           </nav>
 
           {/* User section */}
-          <div className="p-4 border-t border-border">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-semibold">
-                {userName.charAt(0).toUpperCase()}
+          <div className="p-4 border-t border-border/50 bg-muted/30">
+            <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/50 mb-3">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+                {userInitial}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{userName}</p>
+                <p className="text-sm font-semibold text-foreground truncate">{userName}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
               </div>
             </div>
             <Button
               variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-destructive"
+              className="w-full justify-start text-muted-foreground hover:text-rose-600 hover:bg-rose-50 rounded-xl"
               onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4 mr-2" />
@@ -134,32 +138,47 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-72">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 bg-background/80 backdrop-blur-lg border-b border-border">
-          <button
-            className="lg:hidden p-2 text-muted-foreground hover:text-foreground"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
+          <div className="flex items-center justify-between h-16 px-4 md:px-6">
+            <button
+              className="lg:hidden p-2 text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted transition-colors"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
 
-          <div className="flex-1" />
+            <div className="flex-1" />
 
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-accent" />
-            </Button>
-            <Button variant="accent" size="sm">
-              <PlusCircle className="h-4 w-4 mr-1" />
-              Add Expense
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative rounded-xl hover:bg-muted"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+              </Button>
+              <Button 
+                className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/30 hidden sm:flex"
+                size="sm"
+              >
+                <PlusCircle className="h-4 w-4 mr-1.5" />
+                Add Expense
+              </Button>
+              <Button 
+                className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/30 sm:hidden"
+                size="icon"
+              >
+                <PlusCircle className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="p-4 md:p-6 lg:p-8">
+        <main className="p-4 md:p-6 lg:p-8 min-h-[calc(100vh-4rem)]">
           {children}
         </main>
       </div>

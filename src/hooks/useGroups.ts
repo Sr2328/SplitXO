@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export interface Group {
+  totalSpent: number;
   id: string;
   name: string;
   description: string | null;

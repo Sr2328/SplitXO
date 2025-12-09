@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -14,6 +14,8 @@ export type ExpenseCategory =
   | "other";
 
 export interface Expense {
+  description: ReactNode;
+  date: string | number | Date;
   id: string;
   group_id: string;
   title: string;

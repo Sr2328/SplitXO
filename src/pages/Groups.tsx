@@ -85,35 +85,38 @@ export default function Groups() {
   return (
     <DashboardLayout user={user}>
       <div className="space-y-6">
-        {/* Header */}
+        {/* Enhanced Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
         >
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Groups</h1>
-            <p className="text-muted-foreground mt-1">Manage your expense sharing groups</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Groups</h1>
+            <p className="text-muted-foreground mt-2 text-sm font-medium">Manage your expense sharing groups</p>
           </div>
-          <Button onClick={() => setCreateGroupOpen(true)}>
+          <Button 
+            onClick={() => setCreateGroupOpen(true)}
+            className="rounded-xl shadow-sm hover:shadow-md transition-all"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Create Group
           </Button>
         </motion.div>
 
-        {/* Search */}
+        {/* Enhanced Search */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="relative"
         >
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search groups..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-11 h-12 rounded-xl border-border/50 focus:border-primary/50 transition-colors"
           />
         </motion.div>
 
@@ -123,26 +126,29 @@ export default function Groups() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-card rounded-2xl border border-border p-12 text-center"
+            className="bg-card rounded-[2rem] border border-border/50 shadow-lg p-16 text-center"
           >
-            <div className="p-4 rounded-full bg-muted inline-block mb-4">
-              <Users className="h-8 w-8 text-muted-foreground" />
+            <div className="p-5 rounded-2xl bg-muted/50 inline-block mb-6">
+              <Users className="h-10 w-10 text-muted-foreground" />
             </div>
-            <h3 className="font-semibold text-foreground mb-2">
+            <h3 className="font-bold text-foreground mb-3 text-xl">
               {searchQuery ? "No groups found" : "No groups yet"}
             </h3>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground mb-6 text-sm max-w-[300px] mx-auto">
               {searchQuery ? "Try a different search term" : "Create your first group to start splitting expenses"}
             </p>
             {!searchQuery && (
-              <Button onClick={() => setCreateGroupOpen(true)}>
+              <Button 
+                onClick={() => setCreateGroupOpen(true)}
+                className="rounded-xl shadow-sm"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Create Group
               </Button>
             )}
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <AnimatePresence mode="popLayout">
               {filteredGroups.map((group, index) => (
                 <motion.div
@@ -151,36 +157,44 @@ export default function Groups() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-card rounded-2xl border border-border shadow-card hover:shadow-elevated transition-all duration-300 overflow-hidden group"
+                  className="bg-card rounded-2xl border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group hover:scale-[1.02]"
                 >
-                  {/* Group Header with Gradient */}
-                  <div className="h-20 gradient-primary relative">
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-foreground/10" />
-                    <div className="absolute bottom-3 left-4 flex items-center gap-2">
-                      <div className="h-10 w-10 rounded-xl bg-background/20 backdrop-blur-sm flex items-center justify-center">
-                        <Users className="h-5 w-5 text-primary-foreground" />
+                  {/* Enhanced Group Header with Gradient */}
+                  <div className="h-24 bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
+                    {/* Decorative elements */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
+                    
+                    <div className="absolute bottom-4 left-5 flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-lg">
+                        <Users className="h-6 w-6 text-white" />
                       </div>
                     </div>
                   </div>
 
-                  {/* Group Content */}
-                  <div className="p-4">
-                    <h3 className="font-semibold text-foreground text-lg mb-1">{group.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px]">
+                  {/* Enhanced Group Content */}
+                  <div className="p-5">
+                    <h3 className="font-bold text-foreground text-lg mb-2 tracking-tight line-clamp-1">
+                      {group.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px] leading-relaxed">
                       {group.description || "No description"}
                     </p>
 
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Users className="h-4 w-4" />
+                    <div className="flex items-center justify-between mt-5 pt-5 border-t border-border/50">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                        <div className="p-1.5 rounded-lg bg-muted/50">
+                          <Users className="h-4 w-4" />
+                        </div>
                         <span>{group.member_count || 0} members</span>
                       </div>
-
+                      
                       <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-9 w-9 rounded-xl hover:bg-muted/50 transition-all"
                           onClick={() => handleManageMembers(group)}
                         >
                           <UserPlus className="h-4 w-4" />
@@ -188,7 +202,7 @@ export default function Groups() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          className="h-9 w-9 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 transition-all"
                           onClick={() => handleDeleteGroup(group)}
                         >
                           <Trash2 className="h-4 w-4" />
