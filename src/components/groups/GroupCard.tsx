@@ -26,8 +26,8 @@ export function GroupCard({
   onClick,
   delay = 0,
 }: GroupCardProps) {
-  // Get member avatars (assuming group has a members array)
-  const members = group.members || [];
+  // Get member avatars from group_members array
+  const members = group.group_members || [];
   const displayMembers = members.slice(0, 5);
   const remainingCount = Math.max(0, members.length - 5);
   const memberCount = group.member_count || members.length || 0;
@@ -111,20 +111,22 @@ export function GroupCard({
             {/* Member Avatars - Right Aligned */}
             {members.length > 0 && (
               <div className="flex items-center justify-end -space-x-2">
-                {displayMembers.map((member, index) => (
+                {displayMembers.map((member) => (
                   <div
-                    key={member.id || index}
+                    key={member.id}
                     className="h-9 w-9 rounded-full border-2 border-white dark:border-gray-900 hover:scale-110 hover:z-10 transition-transform cursor-pointer overflow-hidden bg-gradient-to-br from-green-400 to-teal-500 flex items-center justify-center text-white font-semibold text-xs shadow-md"
-                    title={member.full_name || member.email}
+                    title={member.profile?.full_name || member.profile?.email}
                   >
-                    {member.avatar_url ? (
+                    {member.profile?.avatar_url ? (
                       <img 
-                        src={member.avatar_url} 
-                        alt={member.full_name || member.email}
+                        src={member.profile.avatar_url} 
+                        alt={member.profile?.full_name || member.profile?.email}
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span>{(member.full_name?.[0] || member.email?.[0] || '?').toUpperCase()}</span>
+                      <span>
+                        {(member.profile?.full_name || member.profile?.email || "?").charAt(0).toUpperCase()}
+                      </span>
                     )}
                   </div>
                 ))}
@@ -144,4 +146,4 @@ export function GroupCard({
       </div>
     </motion.div>
   );
-}s
+}
