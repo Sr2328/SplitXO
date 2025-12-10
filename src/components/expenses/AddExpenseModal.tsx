@@ -31,23 +31,23 @@ interface AddExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
   groups: Group[];
- onSubmit: (
-  expense: {
-    group_id: string;
-    title: string;
-    amount: number;
-    category: ExpenseCategory;
-    paid_by: string;
-    expense_date: string;
-    notes?: string;
-  },
-  splits: SplitInput[]
-) => Promise<any>;  // or Promise<Expense>
-
-  getGroupMembers: (groupId: string) => Promise<GroupMember[]>;
-  currentUserId: string;
+  onSubmit: (
+    expense: {
+      group_id: string;
+      title: string;
+      amount: number;
+      category: ExpenseCategory;
+      paid_by: string;
+      expense_date: string;
+      notes?: string;
+      receipt_url?: string;
+    },
+    splits: SplitInput[]
+  ) => Promise<unknown>;
+  getGroupMembers?: (groupId: string) => Promise<GroupMember[]>;
+  currentUserId?: string;
   onCreateGroup?: () => void;
-  onSuccess?: () => void; // NEW: Callback after successful creation
+  preselectedGroupId?: string;
 }
 
 export function AddExpenseModal({
@@ -58,7 +58,7 @@ export function AddExpenseModal({
   getGroupMembers,
   currentUserId,
   onCreateGroup,
-  onSuccess,
+  preselectedGroupId,
 }: AddExpenseModalProps) {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
@@ -66,7 +66,7 @@ export function AddExpenseModal({
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState("");
-  const [paidBy, setPaidBy] = useState(currentUserId);
+  const [paidBy, setPaidBy] = useState(currentUserId || "");
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [splitType, setSplitType] = useState<"equal" | "custom">("equal");
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
@@ -74,35 +74,35 @@ export function AddExpenseModal({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (selectedGroupId) {
+    if (selectedGroupId && getGroupMembers) {
       loadMembers(selectedGroupId);
-    } else {
+    } else if (selectedGroupId && groups.length > 0) {
+      // For GroupDetail page where members are already known
       setMembers([]);
     }
   }, [selectedGroupId]);
 
   useEffect(() => {
     if (isOpen) {
-      setPaidBy(currentUserId);
-      if (groups.length > 0 && !selectedGroupId) {
+      setPaidBy(currentUserId || "");
+      if (preselectedGroupId) {
+        setSelectedGroupId(preselectedGroupId);
+      } else if (groups.length > 0 && !selectedGroupId) {
         setSelectedGroupId(groups[0].id);
       }
     }
-  }, [isOpen, groups, currentUserId]);
+  }, [isOpen, groups, currentUserId, preselectedGroupId]);
 
   const loadMembers = async (groupId: string) => {
-    try {
-      const groupMembers = await getGroupMembers(groupId);
-      setMembers(groupMembers);
-      const splits: Record<string, string> = {};
-      groupMembers.forEach((m) => {
-        splits[m.user_id] = "";
-      });
-      setCustomSplits(splits);
-    } catch (error) {
-      console.error("Failed to load members:", error);
-      setError("Failed to load group members");
-    }
+    if (!getGroupMembers) return;
+    const groupMembers = await getGroupMembers(groupId);
+    setMembers(groupMembers);
+    // Initialize custom splits
+    const splits: Record<string, string> = {};
+    groupMembers.forEach((m) => {
+      splits[m.user_id] = "";
+    });
+    setCustomSplits(splits);
   };
 
   const resetForm = () => {
@@ -116,7 +116,8 @@ export function AddExpenseModal({
     setError("");
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError("");
 
     const numAmount = parseFloat(amount);
@@ -138,11 +139,7 @@ export function AddExpenseModal({
       return;
     }
 
-    if (members.length === 0) {
-      setError("Group must have at least one member");
-      return;
-    }
-
+    // Calculate splits
     let splits: SplitInput[] = [];
     if (splitType === "equal") {
       const splitAmount = numAmount / members.length;
@@ -157,11 +154,6 @@ export function AddExpenseModal({
           user_id: userId,
           amount: parseFloat(val),
         }));
-
-      if (splits.length === 0) {
-        setError("Please enter split amounts for at least one person");
-        return;
-      }
 
       const total = splits.reduce((sum, s) => sum + s.amount, 0);
       if (Math.abs(total - numAmount) > 0.01) {
@@ -186,14 +178,8 @@ export function AddExpenseModal({
       );
       resetForm();
       onClose();
-      
-      // Call the success callback to refresh the expenses and balances
-      if (onSuccess) {
-        await onSuccess();
-      }
-    } catch (err) {
-      console.error("Failed to create expense:", err);
-      setError("Failed to create expense. Please try again.");
+    } catch {
+      // Error handled in hook
     } finally {
       setLoading(false);
     }

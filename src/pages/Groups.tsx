@@ -157,7 +157,8 @@ export default function Groups() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-card rounded-2xl border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group hover:scale-[1.02]"
+                   onClick={() => navigate(`/groups/${group.id}`)}
+                  className="bg-card rounded-2xl border border-border shadow-card hover:shadow-elevated transition-all duration-300 overflow-hidden group cursor-pointer"
                 >
                   {/* Enhanced Group Header with Gradient */}
                   <div className="h-24 bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 relative overflow-hidden">
@@ -190,7 +191,7 @@ export default function Groups() {
                         <span>{group.member_count || 0} members</span>
                       </div>
                       
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           size="icon"

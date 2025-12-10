@@ -212,13 +212,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
           ) : (
             <div className="space-y-3">
               {expenses.slice(0, 5).map((expense, i) => (
-                <ExpenseCard 
-                  key={expense.id} 
-                  expense={expense} 
-                  currentUserId={user.id} 
-                  onDelete={(exp) => deleteExpense(exp.id)} 
-                  delay={i * 0.05} 
-                />
+             <ExpenseCard key={expense.id} expense={expense} currentUserId={user.id} onDelete={(id) => deleteExpense(id)} delay={i * 0.05} />
               ))}
             </div>
           )}

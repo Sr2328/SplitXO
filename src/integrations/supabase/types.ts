@@ -275,6 +275,7 @@ export type Database = {
           notes: string | null
           paid_by: string
           paid_to: string
+          receipt_url: string | null
           settled_at: string
         }
         Insert: {
@@ -285,6 +286,7 @@ export type Database = {
           notes?: string | null
           paid_by: string
           paid_to: string
+          receipt_url?: string | null
           settled_at?: string
         }
         Update: {
@@ -295,6 +297,7 @@ export type Database = {
           notes?: string | null
           paid_by?: string
           paid_to?: string
+          receipt_url?: string | null
           settled_at?: string
         }
         Relationships: [

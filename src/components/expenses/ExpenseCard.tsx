@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -25,8 +25,9 @@ const categoryEmojis: Record<ExpenseCategory, string> = {
 interface ExpenseCardProps {
   expense: Expense;
   onEdit?: (expense: Expense) => void;
-  onDelete?: (expense: Expense) => void;
-  currentUserId: string;
+  onDelete?: (id: string) => void;
+  onShare?: (expense: Expense) => void;
+  currentUserId?: string;
   delay?: number;
 }
 
@@ -34,10 +35,11 @@ export function ExpenseCard({
   expense,
   onEdit,
   onDelete,
+  onShare,
   currentUserId,
   delay = 0,
 }: ExpenseCardProps) {
-  const isPaidByMe = expense.paid_by === currentUserId;
+  const isPaidByMe = currentUserId && expense.paid_by === currentUserId;
   const payerName = isPaidByMe ? "You" : expense.payer?.full_name || expense.payer?.email || "Unknown";
 
   return (
@@ -67,7 +69,7 @@ export function ExpenseCard({
           </p>
         </div>
 
-        {(onEdit || onDelete) && (
+        {(onEdit || onDelete || onShare) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -79,6 +81,12 @@ export function ExpenseCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {onShare && (
+                <DropdownMenuItem onClick={() => onShare(expense)}>
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </DropdownMenuItem>
+              )}
               {onEdit && (
                 <DropdownMenuItem onClick={() => onEdit(expense)}>
                   <Pencil className="h-4 w-4 mr-2" />
@@ -87,7 +95,7 @@ export function ExpenseCard({
               )}
               {onDelete && (
                 <DropdownMenuItem
-                  onClick={() => onDelete(expense)}
+                 
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />

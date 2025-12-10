@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Groups from "./pages/Groups";
+import GroupDetail from "./pages/GroupDetail";
 import Expenses from "./pages/Expenses";
 import NotFound from "./pages/NotFound";
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/groups" element={<Groups />} />
+          <Route path="/groups/:groupId" element={<GroupDetail />} />
           <Route path="/expenses" element={<Expenses />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
