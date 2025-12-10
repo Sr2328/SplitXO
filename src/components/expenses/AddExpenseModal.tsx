@@ -48,6 +48,7 @@ interface AddExpenseModalProps {
   currentUserId?: string;
   onCreateGroup?: () => void;
   preselectedGroupId?: string;
+    onSuccess?: () => void;
 }
 
 export function AddExpenseModal({

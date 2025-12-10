@@ -10,6 +10,7 @@ import Groups from "./pages/Groups";
 import GroupDetail from "./pages/GroupDetail";
 import Expenses from "./pages/Expenses";
 import NotFound from "./pages/NotFound";
+import SettlementsPage from "./pages/Settlements";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/groups" element={<Groups />} />
           <Route path="/groups/:groupId" element={<GroupDetail />} />
           <Route path="/expenses" element={<Expenses />} />
+          <Route path="/settlements" element={<SettlementsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
