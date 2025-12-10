@@ -152,7 +152,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.5, delay: 0.35 }} 
-          className="bg-card rounded-[2rem] border border-border/50 shadow-lg p-6 md:p-7"
+          className="bg-card rounded-[1rem] border border-border/50 shadow-lg p-6 md:p-7"
         >
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -181,7 +181,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.5, delay: 0.4 }} 
-          className="bg-card rounded-[2rem] border border-border/50 shadow-lg p-6 md:p-7"
+          className="bg-card rounded-[1rem] border border-border/50 shadow-lg p-6 md:p-7"
         >
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -223,7 +223,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.5, delay: 0.45 }} 
-          className="bg-card rounded-[2rem] border border-border/50 shadow-lg p-6 md:p-7"
+          className="bg-card rounded-[1rem] border border-border/50 shadow-lg p-6 md:p-7"
         >
           <div className="flex items-center justify-between mb-6">
             <div>

@@ -26,25 +26,29 @@ export function GroupCard({
   onClick,
   delay = 0,
 }: GroupCardProps) {
+  // Get member avatars (assuming group has a members array)
+  const members = group.members || [];
+  const displayMembers = members.slice(0, 5);
+  const remainingCount = Math.max(0, members.length - 5);
+  const memberCount = group.member_count || members.length || 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay }}
-      className="bg-card rounded-2xl border border-border shadow-card hover:shadow-elevated transition-all duration-300 overflow-hidden cursor-pointer group"
+      className="bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer group/card"
       onClick={() => onClick(group)}
     >
-      <div className="p-5">
-        <div className="flex items-start justify-between mb-3">
-          <div className="p-3 rounded-xl gradient-primary">
-            <Users className="h-5 w-5 text-primary-foreground" />
-          </div>
+      {/* Header with Image/Gradient */}
+      <div className="relative h-32 bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 p-5">
+        <div className="absolute top-4 right-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-8 w-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-lg opacity-0 group-hover/card:opacity-100 transition-opacity"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
@@ -68,21 +72,76 @@ export function GroupCard({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        
+        {/* Group Icon/Image */}
+        {group.image_url ? (
+          <img 
+            src={group.image_url} 
+            alt={group.name}
+            className="h-16 w-16 rounded-2xl object-cover border-2 border-white/50 shadow-lg"
+          />
+        ) : (
+          <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-sm border-2 border-white/50 flex items-center justify-center shadow-lg">
+            <Users className="h-8 w-8 text-white" />
+          </div>
+        )}
+      </div>
 
-        <h3 className="font-semibold text-foreground text-lg mb-1 line-clamp-1">
+      {/* Content */}
+      <div className="p-5 pt-4">
+        <h3 className="font-bold text-foreground text-lg mb-1 line-clamp-1">
           {group.name}
         </h3>
+        
         {group.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
             {group.description}
           </p>
         )}
 
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Users className="h-4 w-4" />
-          <span>{group.member_count || 0} members</span>
+        {/* Members Section */}
+        <div className="mt-4 pt-4 border-t border-border/50">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <span className="text-sm text-muted-foreground font-medium">
+                Members Joined: <span className="text-foreground font-semibold">{memberCount}</span>
+              </span>
+            </div>
+            
+            {/* Member Avatars - Right Aligned */}
+            {members.length > 0 && (
+              <div className="flex items-center justify-end -space-x-2">
+                {displayMembers.map((member, index) => (
+                  <div
+                    key={member.id || index}
+                    className="h-9 w-9 rounded-full border-2 border-white dark:border-gray-900 hover:scale-110 hover:z-10 transition-transform cursor-pointer overflow-hidden bg-gradient-to-br from-green-400 to-teal-500 flex items-center justify-center text-white font-semibold text-xs shadow-md"
+                    title={member.full_name || member.email}
+                  >
+                    {member.avatar_url ? (
+                      <img 
+                        src={member.avatar_url} 
+                        alt={member.full_name || member.email}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span>{(member.full_name?.[0] || member.email?.[0] || '?').toUpperCase()}</span>
+                    )}
+                  </div>
+                ))}
+                
+                {/* +N indicator */}
+                {remainingCount > 0 && (
+                  <div
+                    className="h-9 w-9 rounded-full border-2 border-white dark:border-gray-900 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-foreground font-bold text-xs shadow-md"
+                  >
+                    +{remainingCount}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>
   );
-}
+}s

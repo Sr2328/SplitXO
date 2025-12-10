@@ -22,6 +22,18 @@ const categoryEmojis: Record<ExpenseCategory, string> = {
   other: "📦",
 };
 
+const categoryColors: Record<ExpenseCategory, string> = {
+  food: "bg-orange-50 dark:bg-orange-950/30",
+  transport: "bg-blue-50 dark:bg-blue-950/30",
+  entertainment: "bg-purple-50 dark:bg-purple-950/30",
+  shopping: "bg-pink-50 dark:bg-pink-950/30",
+  utilities: "bg-yellow-50 dark:bg-yellow-950/30",
+  rent: "bg-green-50 dark:bg-green-950/30",
+  travel: "bg-cyan-50 dark:bg-cyan-950/30",
+  healthcare: "bg-red-50 dark:bg-red-950/30",
+  other: "bg-gray-50 dark:bg-gray-950/30",
+};
+
 interface ExpenseCardProps {
   expense: Expense;
   onEdit?: (expense: Expense) => void;
@@ -40,35 +52,56 @@ export function ExpenseCard({
   delay = 0,
 }: ExpenseCardProps) {
   const isPaidByMe = currentUserId && expense.paid_by === currentUserId;
-  const payerName = isPaidByMe ? "You" : expense.payer?.full_name || expense.payer?.email || "Unknown";
+  const payerName = isPaidByMe ? "You" : expense.payer?.full_name || expense.payer?.email?.split('@')[0] || "Unknown";
+  const isNegative = !isPaidByMe;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, delay }}
-      className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors group"
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3, delay }}
+      className="flex items-center justify-between py-4 border-b border-border/40 last:border-0 hover:bg-muted/30 -mx-2 px-2 rounded-lg transition-all duration-200 group"
     >
-      <div className="flex items-center gap-4">
-        <div className="h-12 w-12 rounded-xl bg-card flex items-center justify-center text-2xl shadow-sm">
-          {categoryEmojis[expense.category] || "📦"}
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        {/* Avatar/Icon */}
+        <div className={`h-12 w-12 rounded-full flex items-center justify-center text-xl font-medium shadow-sm border border-border/50 ${categoryColors[expense.category] || categoryColors.other}`}>
+          {isPaidByMe ? (
+            <span className="text-2xl">{categoryEmojis[expense.category] || "📦"}</span>
+          ) : (
+            <span className="text-sm font-bold text-foreground">
+              {(expense.payer?.full_name?.[0] || expense.payer?.email?.[0] || "?").toUpperCase()}
+            </span>
+          )}
         </div>
-        <div>
-          <h4 className="font-medium text-foreground">{expense.title}</h4>
-          <p className="text-sm text-muted-foreground">
-            {payerName} paid • {expense.group?.name || "Unknown group"}
-          </p>
+
+        {/* Details */}
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-foreground text-sm md:text-base truncate">
+            {expense.title}
+          </h4>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-xs text-muted-foreground truncate">
+              {payerName} paid
+            </p>
+            <span className="text-muted-foreground/50">•</span>
+            <p className="text-xs text-muted-foreground truncate">
+              {expense.group?.name || "Unknown group"}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      {/* Amount and Menu */}
+      <div className="flex items-center gap-2 flex-shrink-0">
         <div className="text-right">
-          <p className="font-semibold text-foreground">₹{Number(expense.amount).toFixed(2)}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className={`font-bold text-base md:text-lg ${isNegative ? 'text-red-500' : 'text-green-500'}`}>
+            {isNegative ? '-' : '+'}₹{Number(expense.amount).toFixed(2)}
+          </p>
+          <p className="text-xs text-muted-foreground whitespace-nowrap">
             {format(new Date(expense.expense_date), "MMM d, yyyy")}
           </p>
         </div>
-
+        
         {(onEdit || onDelete || onShare) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -95,7 +128,7 @@ export function ExpenseCard({
               )}
               {onDelete && (
                 <DropdownMenuItem
-                 
+                  onClick={() => onDelete(expense.id)}
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
