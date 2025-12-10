@@ -175,99 +175,107 @@ export function DashboardHome({ user }: DashboardHomeProps) {
       )}
 
       {/* Enhanced Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Enhanced Recent Expenses */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.5, delay: 0.4 }} 
-          className="bg-card rounded-[1rem] border border-border/50 shadow-lg p-6 md:p-7"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-foreground">Recent Expenses</h2>
-              <p className="text-xs text-muted-foreground mt-1">Last transactions</p>
-            </div>
-            <Button 
-              size="sm" 
-              variant="ghost"
-              onClick={() => setAddExpenseOpen(true)}
-              className="h-10 w-10 p-0 rounded-xl hover:bg-muted/50 transition-all hover:scale-105"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
-          </div>
-          
-          {expenses.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="p-5 rounded-2xl bg-muted/50 mb-5">
-                <Receipt className="h-10 w-10 text-muted-foreground" />
-              </div>
-              <h3 className="font-semibold text-foreground text-lg mb-2">No expenses yet</h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-[250px]">Start tracking by adding your first expense</p>
-              <Button size="sm" onClick={() => setAddExpenseOpen(true)} className="rounded-xl shadow-sm">
-                <Plus className="h-4 w-4 mr-2" />Add Expense
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {expenses.slice(0, 5).map((expense, i) => (
-             <ExpenseCard key={expense.id} expense={expense} currentUserId={user.id} onDelete={(id) => deleteExpense(id)} delay={i * 0.05} />
-              ))}
-            </div>
-          )}
-        </motion.div>
-
-        {/* Enhanced Your Groups */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.5, delay: 0.45 }} 
-          className="bg-card rounded-[1rem] border border-border/50 shadow-lg p-6 md:p-7"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-foreground">Your Groups</h2>
-              <p className="text-xs text-muted-foreground mt-1">Manage your groups</p>
-            </div>
-            <Button 
-              size="sm" 
-              variant="ghost"
-              onClick={() => setCreateGroupOpen(true)}
-              className="h-10 w-10 p-0 rounded-xl hover:bg-muted/50 transition-all hover:scale-105"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
-          </div>
-          
-          {groups.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="p-5 rounded-2xl bg-muted/50 mb-5">
-                <Users className="h-10 w-10 text-muted-foreground" />
-              </div>
-              <h3 className="font-semibold text-foreground text-lg mb-2">No groups yet</h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-[250px]">Create a group to start splitting expenses</p>
-              <Button size="sm" onClick={() => setCreateGroupOpen(true)} className="rounded-xl shadow-sm">
-                <Plus className="h-4 w-4 mr-2" />Create Group
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {groups.slice(0, 4).map((group, i) => (
-                <GroupCard 
-                  key={group.id} 
-                  group={group} 
-                  onEdit={() => {}} 
-                  onDelete={(g) => deleteGroup(g.id)} 
-                  onManageMembers={handleManageMembers} 
-                  onClick={() => {}} 
-                  delay={i * 0.05} 
-                />
-              ))}
-            </div>
-          )}
-        </motion.div>
+    <>
+  {/* Enhanced Recent Expenses */}
+  <motion.div 
+    initial={{ opacity: 0, y: 20 }} 
+    animate={{ opacity: 1, y: 0 }} 
+    transition={{ duration: 0.5, delay: 0.4 }} 
+    className="bg-card rounded-2xl border border-border/50 shadow-lg p-6 mb-6"
+  >
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h2 className="text-xl md:text-2xl font-bold text-foreground">Recent Expenses</h2>
+        <p className="text-xs text-muted-foreground mt-1">Last transactions</p>
       </div>
+      <Button 
+        size="sm" 
+        variant="ghost"
+        onClick={() => setAddExpenseOpen(true)}
+        className="h-10 w-10 p-0 rounded-xl hover:bg-muted/50 transition-all hover:scale-105"
+      >
+        <Plus className="h-5 w-5" />
+      </Button>
+    </div>
+    
+    {expenses.length === 0 ? (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="p-4 rounded-2xl bg-muted/50 mb-4">
+          <Receipt className="h-10 w-10 text-muted-foreground" />
+        </div>
+        <h3 className="font-semibold text-foreground text-lg mb-2">No expenses yet</h3>
+        <p className="text-sm text-muted-foreground mb-6 max-w-[250px]">Start tracking by adding your first expense</p>
+        <Button size="sm" onClick={() => setAddExpenseOpen(true)} className="rounded-xl shadow-sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Expense
+        </Button>
+      </div>
+    ) : (
+      <div className="space-y-3">
+        {expenses.slice(0, 5).map((expense, i) => (
+          <ExpenseCard 
+            key={expense.id} 
+            expense={expense} 
+            currentUserId={user.id} 
+            onDelete={(id) => deleteExpense(id)} 
+            delay={i * 0.05} 
+          />
+        ))}
+      </div>
+    )}
+  </motion.div>
+
+  {/* Enhanced Your Groups */}
+  <motion.div 
+    initial={{ opacity: 0, y: 20 }} 
+    animate={{ opacity: 1, y: 0 }} 
+    transition={{ duration: 0.5, delay: 0.45 }} 
+    className="bg-card rounded-2xl border border-border/50 shadow-lg p-6"
+  >
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h2 className="text-xl md:text-2xl font-bold text-foreground">Your Groups</h2>
+        <p className="text-xs text-muted-foreground mt-1">Manage your groups</p>
+      </div>
+      <Button 
+        size="sm" 
+        variant="ghost"
+        onClick={() => setCreateGroupOpen(true)}
+        className="h-10 w-10 p-0 rounded-xl hover:bg-muted/50 transition-all hover:scale-105"
+      >
+        <Plus className="h-5 w-5" />
+      </Button>
+    </div>
+    
+    {groups.length === 0 ? (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="p-4 rounded-2xl bg-muted/50 mb-4">
+          <Users className="h-10 w-10 text-muted-foreground" />
+        </div>
+        <h3 className="font-semibold text-foreground text-lg mb-2">No groups yet</h3>
+        <p className="text-sm text-muted-foreground mb-6 max-w-[250px]">Create a group to start splitting expenses</p>
+        <Button size="sm" onClick={() => setCreateGroupOpen(true)} className="rounded-xl shadow-sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Create Group
+        </Button>
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {groups.slice(0, 4).map((group, i) => (
+          <GroupCard 
+            key={group.id} 
+            group={group} 
+            onEdit={() => {}} 
+            onDelete={(g) => deleteGroup(g.id)} 
+            onManageMembers={handleManageMembers} 
+            onClick={() => {}} 
+            delay={i * 0.05} 
+          />
+        ))}
+      </div>
+    )}
+  </motion.div>
+</>
 
       {/* Modals */}
       <CreateGroupModal 
