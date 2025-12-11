@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { MoreVertical, Pencil, Trash2, Share2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { MoreVertical, Pencil, Trash2, Share2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -41,6 +42,7 @@ interface ExpenseCardProps {
   onShare?: (expense: Expense) => void;
   currentUserId?: string;
   delay?: number;
+  showNavigate?: boolean;
 }
 
 export function ExpenseCard({
@@ -50,18 +52,25 @@ export function ExpenseCard({
   onShare,
   currentUserId,
   delay = 0,
+  showNavigate = true,
 }: ExpenseCardProps) {
+    const navigate = useNavigate();
   const isPaidByMe = currentUserId && expense.paid_by === currentUserId;
   const payerName = isPaidByMe ? "You" : expense.payer?.full_name || expense.payer?.email?.split('@')[0] || "Unknown";
   const isNegative = !isPaidByMe;
+ const handleCardClick = () => {
+    if (showNavigate) {
+      navigate(`/expenses/${expense.id}`);
+    }
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay }}
-      className="flex items-center justify-between py-4 border-b border-border/40 last:border-0 hover:bg-muted/30 -mx-2 px-2 rounded-lg transition-all duration-200 group"
-    >
+      className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-colors group cursor-pointer"
+      onClick={handleCardClick}>
       <div className="flex items-center gap-3 flex-1 min-w-0">
         {/* Avatar/Icon */}
         <div className={`h-12 w-12 rounded-full flex items-center justify-center text-xl font-medium shadow-sm border border-border/50 ${categoryColors[expense.category] || categoryColors.other}`}>
@@ -109,26 +118,27 @@ export function ExpenseCard({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => e.stopPropagation()}
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {onShare && (
-                <DropdownMenuItem onClick={() => onShare(expense)}>
+                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onShare(expense); }}>
                   <Share2 className="h-4 w-4 mr-2" />
                   Share
                 </DropdownMenuItem>
               )}
               {onEdit && (
-                <DropdownMenuItem onClick={() => onEdit(expense)}>
+               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(expense); }}>
                   <Pencil className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
               )}
               {onDelete && (
-                <DropdownMenuItem
-                  onClick={() => onDelete(expense.id)}
+               <DropdownMenuItem
+                  onClick={(e) => { e.stopPropagation(); onDelete(expense.id); }}
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -137,6 +147,10 @@ export function ExpenseCard({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+         )}
+
+        {showNavigate && (
+          <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
         )}
       </div>
     </motion.div>

@@ -1,348 +1,505 @@
-import { useEffect, useState } from 'react';
-import { Receipt, Calendar, FileText, CheckCircle2, Loader2, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { useBalances, Settlement } from "@/hooks/useBalances";
+import { useGroups } from "@/hooks/useGroups";
+import { SettleModal } from "@/components/balances/SettleModal";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { 
+  ArrowRightLeft, 
+  Receipt, 
+  Calendar, 
+  User as UserIcon, 
+  FileText, 
+  Download, 
+  ExternalLink,
+  TrendingUp,
+  TrendingDown,
+  CheckCircle2,
+  Clock,
+  Image as ImageIcon
+} from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Balance } from "@/hooks/useBalances";
 
-interface Settlement {
-  id: string;
-  group_id: string;
-  paid_by: string;
-  paid_to: string;
-  amount: number;
-  notes: string | null;
-  settled_at: string;
-  payer?: {
-    full_name: string | null;
-    email: string | null;
-  };
-  receiver?: {
-    full_name: string | null;
-    email: string | null;
-  };
-}
-
-function SettlementsPage() {
-  const [settlements, setSettlements] = useState<Settlement[]>([]);
+export default function Settlements() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  
+
   useEffect(() => {
-    fetchSettlements();
-  }, []);
-
-  const fetchSettlements = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
         setLoading(false);
-        return;
+        if (!session) {
+          navigate("/auth");
+        }
       }
+    );
 
-      setCurrentUser(user);
-
-      const { data: settlementsData, error: fetchError } = await supabase
-        .from('settlements')
-        .select(`
-          id,
-          group_id,
-          paid_by,
-          paid_to,
-          amount,
-          notes,
-          settled_at,
-          created_at,
-          receipt_url
-        `)
-        .or(`paid_by.eq.${user.id},paid_to.eq.${user.id}`)
-        .order('settled_at', { ascending: false });
-      
-      if (fetchError) {
-        console.error('Fetch error:', fetchError);
-        setError(fetchError.message);
-        setLoading(false);
-        return;
-      }
-
-      if (!settlementsData || settlementsData.length === 0) {
-        setSettlements([]);
-        setLoading(false);
-        return;
-      }
-
-      // Get unique user IDs from settlements
-      const userIds = new Set<string>();
-      settlementsData.forEach((s: any) => {
-        userIds.add(s.paid_by);
-        userIds.add(s.paid_to);
-      });
-
-      // Fetch user profiles separately
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, email')
-        .in('user_id', Array.from(userIds));
-
-      if (profilesError) {
-        console.error('Profiles fetch error:', profilesError);
-      }
-
-      // Create a map of user profiles
-      const profilesMap = new Map();
-      (profilesData || []).forEach((profile: any) => {
-        profilesMap.set(profile.user_id, profile);
-      });
-
-      // Process settlements with profile data
-      const processedSettlements = settlementsData.map((s: any) => ({
-        ...s,
-        payer: profilesMap.get(s.paid_by) || { full_name: null, email: null },
-        receiver: profilesMap.get(s.paid_to) || { full_name: null, email: null },
-      }));
-
-      setSettlements(processedSettlements);
-    } catch (err: any) {
-      console.error('Error fetching settlements:', err);
-      setError(err.message || 'Failed to load settlements');
-    } finally {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
       setLoading(false);
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    }
-    
-    return date.toLocaleDateString('en-IN', { 
-      day: 'numeric',
-      month: 'short'
+      if (!session) {
+        navigate("/auth");
+      }
     });
-  };
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-IN', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
-    });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2
-    }).format(amount);
-  };
-
-  const getInitials = (name: string | null | undefined) => {
-    if (!name) return '?';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return name[0].toUpperCase();
-  };
-
-  const getAvatarColor = (userId: string) => {
-    const colors = [
-      'bg-blue-500',
-      'bg-purple-500',
-      'bg-pink-500',
-      'bg-orange-500',
-      'bg-teal-500',
-      'bg-indigo-500',
-    ];
-    const index = (userId?.charCodeAt(0) || 0) % colors.length;
-    return colors[index];
-  };
-
-  // Calculate statistics
-  const totalSettlements = settlements?.length || 0;
-  const totalAmount = settlements?.reduce((sum, s) => sum + s.amount, 0) || 0;
-  const youPaid = settlements?.filter(s => s.paid_by === currentUser?.id).reduce((sum, s) => sum + s.amount, 0) || 0;
-  const youReceived = settlements?.filter(s => s.paid_to === currentUser?.id).reduce((sum, s) => sum + s.amount, 0) || 0;
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-teal-100">
-              <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
-            </div>
-            <p className="text-gray-600 text-lg">Loading settlements...</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (!user) return null;
+
+  return (
+    <DashboardLayout user={user}>
+      <SettlementsContent user={user} />
+    </DashboardLayout>
+  );
+}
+
+function SettlementsContent({ user }: { user: User }) {
+  const { balances, totalOwed, totalOwe, settlements, loading, calculateBalances } = useBalances();
+  const { groups } = useGroups();
+  const [settleOpen, setSettleOpen] = useState(false);
+  const [selectedBalance, setSelectedBalance] = useState<Balance | null>(null);
+  const [selectedSettlement, setSelectedSettlement] = useState<Settlement | null>(null);
+
+  // Real-time subscription for settlements
+  useEffect(() => {
+    const channel = supabase
+      .channel('settlements-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'settlements'
+        },
+        () => {
+          calculateBalances();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'expenses'
+        },
+        () => {
+          calculateBalances();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'expense_splits'
+        },
+        () => {
+          calculateBalances();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [calculateBalances]);
+
+  const handleSettle = (balance: Balance) => {
+    setSelectedBalance(balance);
+    setSettleOpen(true);
+  };
+
+  const handleSettleSubmit = async (groupId: string, paidTo: string, amount: number, notes?: string) => {
+    const { createSettlement } = useBalances();
+  };
+
+  const netBalance = totalOwed - totalOwe;
+
+  const getGroupName = (groupId: string) => {
+    return groups.find(g => g.id === groupId)?.name || "Unknown Group";
+  };
+
+  if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center max-w-md px-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-red-100">
-              <FileText className="w-8 h-8 text-red-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <button
-              onClick={fetchSettlements}
-              className="px-6 py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Enhanced Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-8">
+      {/* Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.5 }}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Settlements</h1>
-          <p className="text-muted-foreground mt-2 text-sm font-medium">Track and manage all your shared settlements</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Settlements</h1>
+          <p className="text-muted-foreground mt-1">Track and manage all your payment settlements</p>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Stats Section */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Total Amount Card */}
-        <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl p-6 shadow-lg text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-white" />
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className={cn(
+            "bg-card rounded-2xl border border-border shadow-card p-6",
+            netBalance >= 0 ? "bg-gradient-to-br from-success/5 to-transparent" : "bg-gradient-to-br from-destructive/5 to-transparent"
+          )}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className={cn(
+              "p-2 rounded-xl",
+              netBalance >= 0 ? "bg-success/10" : "bg-destructive/10"
+            )}>
+              {netBalance >= 0 ? (
+                <TrendingUp className="h-5 w-5 text-success" />
+              ) : (
+                <TrendingDown className="h-5 w-5 text-destructive" />
+              )}
             </div>
-            <CheckCircle2 className="w-6 h-6 text-white/60" />
+            <span className="text-sm text-muted-foreground">Net Balance</span>
           </div>
-          <p className="text-white/80 text-sm font-medium mb-1">TOTAL SETTLED</p>
-          <h2 className="text-3xl font-bold mb-1">{formatCurrency(totalAmount)}</h2>
-          <p className="text-white/70 text-sm">{totalSettlements} Settlements</p>
-        </div>
+          <p className={cn(
+            "text-3xl font-bold",
+            netBalance >= 0 ? "text-success" : "text-destructive"
+          )}>
+            {netBalance >= 0 ? "+" : "-"}₹{Math.abs(netBalance).toFixed(2)}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {netBalance >= 0 ? "You're owed overall" : "You owe overall"}
+          </p>
+        </motion.div>
 
-        {/* You Paid Card */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center">
-              <TrendingDown className="w-6 h-6 text-red-500" />
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="bg-card rounded-2xl border border-border shadow-card p-6"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-xl bg-success/10">
+              <TrendingUp className="h-5 w-5 text-success" />
             </div>
+            <span className="text-sm text-muted-foreground">You're Owed</span>
           </div>
-          <p className="text-gray-500 text-sm font-medium mb-1">YOU PAID</p>
-          <h3 className="text-3xl font-bold text-gray-900 mb-1">{formatCurrency(youPaid)}</h3>
-          <p className="text-gray-500 text-sm">{settlements?.filter(s => s.paid_by === currentUser?.id).length} payments</p>
-        </div>
+          <p className="text-3xl font-bold text-foreground">₹{totalOwed.toFixed(2)}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            From {balances.filter(b => b.amount > 0).length} people
+          </p>
+        </motion.div>
 
-        {/* You Received Card */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-green-500" />
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="bg-card rounded-2xl border border-border shadow-card p-6"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-xl bg-destructive/10">
+              <TrendingDown className="h-5 w-5 text-destructive" />
             </div>
+            <span className="text-sm text-muted-foreground">You Owe</span>
           </div>
-          <p className="text-gray-500 text-sm font-medium mb-1">YOU RECEIVED</p>
-          <h3 className="text-3xl font-bold text-gray-900 mb-1">{formatCurrency(youReceived)}</h3>
-          <p className="text-gray-500 text-sm">{settlements?.filter(s => s.paid_to === currentUser?.id).length} received</p>
-        </div>
+          <p className="text-3xl font-bold text-foreground">₹{totalOwe.toFixed(2)}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            To {balances.filter(b => b.amount < 0).length} people
+          </p>
+        </motion.div>
       </div>
 
-      {/* Settlements List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
-            <span className="text-sm text-gray-500 font-medium">{totalSettlements} total</span>
+      {/* Outstanding Balances */}
+      {balances.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="bg-card rounded-2xl border border-border shadow-card overflow-hidden"
+        >
+          <div className="p-6 border-b border-border">
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" />
+              Outstanding Balances
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">People you need to settle with</p>
           </div>
+          <div className="divide-y divide-border">
+            {balances.map((balance, i) => (
+              <motion.div
+                key={balance.userId}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.05 }}
+                className="p-4 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-12 w-12 border-2 border-border">
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                        {balance.userName.split(" ").map(n => n[0]).join("").toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-foreground">{balance.userName}</p>
+                      <p className="text-sm text-muted-foreground">{balance.userEmail}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className={cn(
+                        "text-lg font-semibold",
+                        balance.amount > 0 ? "text-success" : "text-destructive"
+                      )}>
+                        {balance.amount > 0 ? "+" : "-"}₹{Math.abs(balance.amount).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {balance.amount > 0 ? "owes you" : "you owe"}
+                      </p>
+                    </div>
+                    {balance.amount < 0 && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleSettle(balance)}
+                        className="gap-2"
+                      >
+                        <ArrowRightLeft className="h-4 w-4" />
+                        Settle
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Settlement History */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="bg-card rounded-2xl border border-border shadow-card overflow-hidden"
+      >
+        <div className="p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-success" />
+            Settlement History
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">Record of all completed settlements</p>
         </div>
         
         {settlements.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-gray-100">
-              <Receipt className="w-8 h-8 text-gray-400" />
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="p-4 rounded-full bg-muted mb-4">
+              <Receipt className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">No Settlements</h3>
-            <p className="text-gray-500">Settlement records will appear here</p>
+            <h3 className="font-medium text-foreground mb-1">No settlements yet</h3>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              When you or your group members settle payments, they'll appear here with all the details
+            </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {settlements.map((settlement) => {
-              const isPaid = settlement.paid_by === currentUser?.id;
-              const otherPerson = isPaid ? settlement.receiver : settlement.payer;
-              const otherUserId = isPaid ? settlement.paid_to : settlement.paid_by;
-              
-              return (
-                <div key={settlement.id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start space-x-4">
-                    {/* Avatar */}
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 ${getAvatarColor(otherUserId)}`}>
-                      {getInitials(otherPerson?.full_name)}
+          <div className="divide-y divide-border">
+            <AnimatePresence>
+              {settlements.map((settlement, i) => (
+                <motion.div
+                  key={settlement.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3, delay: i * 0.05 }}
+                  className={cn(
+                    "p-6 hover:bg-muted/50 transition-colors cursor-pointer",
+                    selectedSettlement?.id === settlement.id && "bg-primary/5"
+                  )}
+                  onClick={() => setSelectedSettlement(
+                    selectedSettlement?.id === settlement.id ? null : settlement
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4 flex-1">
+                      <div className="relative">
+                        <Avatar className="h-12 w-12 border-2 border-success">
+                          <AvatarFallback className="bg-success/10 text-success font-semibold">
+                            {settlement.payer?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase() || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-card border border-border">
+                          <ArrowRightLeft className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-foreground">
+                            {settlement.paid_by === user.id ? "You" : settlement.payer?.full_name || "Unknown"}
+                          </span>
+                          <span className="text-muted-foreground">paid</span>
+                          <span className="font-medium text-foreground">
+                            {settlement.paid_to === user.id ? "You" : settlement.receiver?.full_name || "Unknown"}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground flex-wrap">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            {format(new Date(settlement.settled_at), "MMM d, yyyy 'at' h:mm a")}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {getGroupName(settlement.group_id)}
+                          </Badge>
+                        </div>
+
+                        {/* Expanded Details */}
+                        <AnimatePresence>
+                          {selectedSettlement?.id === settlement.id && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="mt-4 space-y-4"
+                            >
+                              {settlement.notes && (
+                                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                                  <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                                  <div>
+                                    <p className="text-xs font-medium text-muted-foreground mb-1">Notes</p>
+                                    <p className="text-sm text-foreground">{settlement.notes}</p>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {settlement.receipt_url && (
+                                <div className="p-3 rounded-lg bg-muted/50">
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                    <p className="text-xs font-medium text-muted-foreground">Receipt / Proof of Payment</p>
+                                  </div>
+                                  <div className="relative group">
+                                    <img 
+                                      src={settlement.receipt_url} 
+                                      alt="Settlement receipt"
+                                      className="w-full max-w-md rounded-lg border border-border"
+                                    />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                                      <Button 
+                                        size="sm" 
+                                        variant="secondary"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          window.open(settlement.receipt_url!, '_blank');
+                                        }}
+                                      >
+                                        <ExternalLink className="h-4 w-4 mr-1" />
+                                        View Full
+                                      </Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="secondary"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const link = document.createElement('a');
+                                          link.href = settlement.receipt_url!;
+                                          link.download = `receipt-${settlement.id}.jpg`;
+                                          link.click();
+                                        }}
+                                      >
+                                        <Download className="h-4 w-4 mr-1" />
+                                        Download
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="p-3 rounded-lg bg-muted/50">
+                                  <p className="text-xs text-muted-foreground mb-1">From</p>
+                                  <p className="font-medium text-foreground">
+                                    {settlement.paid_by === user.id ? "You" : settlement.payer?.full_name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">{settlement.payer?.email}</p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-muted/50">
+                                  <p className="text-xs text-muted-foreground mb-1">To</p>
+                                  <p className="font-medium text-foreground">
+                                    {settlement.paid_to === user.id ? "You" : settlement.receiver?.full_name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">{settlement.receiver?.email}</p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
-                    
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-base font-semibold text-gray-900 truncate">
-                            {otherPerson?.full_name || 'Unknown User'}
-                          </h4>
-                          <p className="text-sm text-gray-500 font-medium">
-                            {isPaid ? 'You paid' : 'Paid you'}
-                          </p>
-                        </div>
-                        <div className="text-right ml-4">
-                          <p className={`text-lg font-bold ${isPaid ? 'text-red-600' : 'text-green-600'}`}>
-                            {isPaid ? '-' : '+'}{formatCurrency(settlement.amount)}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="w-4 h-4" />
-                          <span className="font-medium">{formatDate(settlement.settled_at)}</span>
-                        </div>
-                        <span>•</span>
-                        <span>{formatTime(settlement.settled_at)}</span>
-                        <div className="flex items-center space-x-1">
-                          <CheckCircle2 className="w-4 h-4 text-green-500" />
-                          <span className="text-green-600 font-medium">Settled</span>
-                        </div>
-                      </div>
-                      
-                      {settlement.notes && (
-                        <div className="mt-3 bg-gray-50 rounded-lg p-3 border border-gray-100">
-                          <div className="flex items-start space-x-2">
-                            <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                            <p className="text-sm text-gray-700 font-medium">{settlement.notes}</p>
-                          </div>
-                        </div>
-                      )}
+
+                    <div className="text-right shrink-0">
+                      <p className="text-xl font-bold text-success">₹{Number(settlement.amount).toFixed(2)}</p>
+                      <Badge variant="secondary" className="mt-1 gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Settled
+                      </Badge>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
-      </div>
+      </motion.div>
+
+      {/* Settle Modal */}
+      <SettleModal 
+        isOpen={settleOpen} 
+        onClose={() => setSettleOpen(false)} 
+        balance={selectedBalance} 
+        groups={groups} 
+        onSubmit={async (groupId, paidTo, amount, notes) => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+          
+          await supabase.from("settlements").insert({
+            group_id: groupId,
+            paid_by: user.id,
+            paid_to: paidTo,
+            amount,
+            notes,
+          });
+          
+          await calculateBalances();
+        }} 
+      />
     </div>
   );
 }
-
-export default SettlementsPage;

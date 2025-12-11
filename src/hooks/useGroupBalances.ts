@@ -204,7 +204,33 @@ export function useGroupBalances(groupId?: string) {
 
   useEffect(() => {
     calculateBalances();
-  }, [calculateBalances]);
+
+    // Real-time subscription for auto-updates within this group
+    if (groupId) {
+      const channel = supabase
+        .channel(`group-balances-${groupId}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'settlements' },
+          () => calculateBalances()
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'expenses' },
+          () => calculateBalances()
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'expense_splits' },
+          () => calculateBalances()
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [calculateBalances, groupId]);
 
   return {
     balances,
