@@ -17,155 +17,215 @@ export function useGroupBalances(groupId?: string) {
 
   const calculateBalances = useCallback(async () => {
     if (!groupId) {
+      console.log("⚠️ No group ID provided");
       setLoading(false);
       return;
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      console.log("🔄 Calculating group balances for:", groupId);
+      
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error("❌ Auth error:", userError);
+        toast.error("Authentication error: " + userError.message);
+        setLoading(false);
+        return;
+      }
+      
+      if (!user) {
+        console.log("⚠️ No user logged in");
+        setLoading(false);
+        return;
+      }
 
-      // Get all expenses in this group where current user paid
-      const { data: paidExpenses } = await supabase
+      console.log("👤 User ID:", user.id);
+
+      // Step 1: Get all expenses in this group
+      console.log("💰 Fetching group expenses...");
+      const { data: groupExpenses, error: expensesError } = await supabase
         .from("expenses")
-        .select(`
-          id,
-          amount,
-          paid_by,
-          splits:expense_splits(user_id, amount, is_settled)
-        `)
-        .eq("group_id", groupId)
-        .eq("paid_by", user.id);
+        .select("id, paid_by, amount, title")
+        .eq("group_id", groupId);
 
-      // Get all expense splits in this group where current user owes
-      const { data: owedSplits } = await supabase
+      if (expensesError) {
+        console.error("❌ Error fetching group expenses:", expensesError);
+        toast.error("Failed to fetch expenses: " + expensesError.message);
+        throw expensesError;
+      }
+
+      console.log("✅ Group expenses:", groupExpenses?.length || 0);
+
+      if (!groupExpenses || groupExpenses.length === 0) {
+        console.log("ℹ️ No expenses in this group yet");
+        setBalances([]);
+        setTotalOwed(0);
+        setTotalOwe(0);
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Get all splits for these expenses
+      const expenseIds = groupExpenses.map(e => e.id);
+      
+      console.log("📊 Fetching splits for", expenseIds.length, "expenses...");
+      const { data: allSplits, error: splitsError } = await supabase
         .from("expense_splits")
-        .select(`
-          amount,
-          is_settled,
-          expense:expenses!inner(
-            id,
-            group_id,
-            paid_by,
-            payer:profiles!expenses_paid_by_fkey(user_id, full_name, email)
-          )
-        `)
-        .eq("user_id", user.id)
-        .eq("expense.group_id", groupId)
-        .neq("expense.paid_by", user.id);
+        .select("*")
+        .in("expense_id", expenseIds)
+        .eq("is_settled", false);
 
-      // Get settlements for this group
-      const { data: settlementsData } = await supabase
+      if (splitsError) {
+        console.error("❌ Error fetching splits:", splitsError);
+        toast.error("Failed to fetch splits: " + splitsError.message);
+        throw splitsError;
+      }
+
+      console.log("✅ Group splits:", allSplits?.length || 0);
+
+      // Step 3: Get settlements for this group
+      console.log("🤝 Fetching settlements...");
+      const { data: settlementsData, error: settlementsError } = await supabase
         .from("settlements")
-        .select(`
-          *,
-          payer:profiles!settlements_paid_by_fkey(full_name, email),
-          receiver:profiles!settlements_paid_to_fkey(full_name, email)
-        `)
+        .select("*")
         .eq("group_id", groupId)
         .or(`paid_by.eq.${user.id},paid_to.eq.${user.id}`);
 
+      if (settlementsError) {
+        console.error("❌ Error fetching settlements:", settlementsError);
+        // Don't throw - settlements are optional
+      }
+
+      console.log("✅ Settlements:", settlementsData?.length || 0);
+
+      // Calculate balances
       const balanceMap = new Map<string, { amount: number; name: string; email: string }>();
 
-      // Process expenses where user paid
-      (paidExpenses || []).forEach((expense) => {
-        const splits = expense.splits || [];
-        splits.forEach((split: any) => {
-          if (split.user_id !== user.id && !split.is_settled) {
-            const existing = balanceMap.get(split.user_id) || { amount: 0, name: "", email: "" };
-            existing.amount += Number(split.amount);
-            balanceMap.set(split.user_id, existing);
-          }
-        });
+      // Create expense lookup
+      const expenseMap = new Map();
+      groupExpenses.forEach(exp => {
+        expenseMap.set(exp.id, exp);
       });
 
-      // Process splits where user owes others
-      (owedSplits || []).forEach((split: any) => {
-        if (!split.is_settled && split.expense?.payer) {
-          const payer = Array.isArray(split.expense.payer) 
-            ? split.expense.payer[0] 
-            : split.expense.payer;
-          
-          const payerId = payer?.user_id || split.expense.paid_by;
-          const existing = balanceMap.get(payerId) || { 
-            amount: 0, 
-            name: payer?.full_name || "", 
-            email: payer?.email || "" 
-          };
-          existing.amount -= Number(split.amount);
-          existing.name = payer?.full_name || existing.name;
-          existing.email = payer?.email || existing.email;
-          balanceMap.set(payerId, existing);
+      console.log("🧮 Processing splits...");
+      let processedCount = 0;
+
+      // Process all splits
+      (allSplits || []).forEach((split: any) => {
+        const expense = expenseMap.get(split.expense_id);
+        if (!expense) {
+          console.log("⚠️ Expense not found for split:", split.expense_id);
+          return;
+        }
+
+        const paidBy = expense.paid_by;
+        const splitUser = split.user_id;
+        const splitAmount = Number(split.amount);
+
+        if (paidBy === user.id && splitUser !== user.id) {
+          // Current user paid, someone else owes them
+          const existing = balanceMap.get(splitUser) || { amount: 0, name: "", email: "" };
+          existing.amount += splitAmount;
+          balanceMap.set(splitUser, existing);
+          console.log(`➕ ${splitUser.substring(0, 8)}... owes you ₹${splitAmount} for "${expense.title}"`);
+          processedCount++;
+        } else if (splitUser === user.id && paidBy !== user.id) {
+          // Someone else paid, current user owes them
+          const existing = balanceMap.get(paidBy) || { amount: 0, name: "", email: "" };
+          existing.amount -= splitAmount;
+          balanceMap.set(paidBy, existing);
+          console.log(`➖ You owe ${paidBy.substring(0, 8)}... ₹${splitAmount} for "${expense.title}"`);
+          processedCount++;
         }
       });
+
+      console.log(`✅ Processed ${processedCount} relevant splits`);
 
       // Apply settlements
-      (settlementsData || []).forEach((settlement: any) => {
-        const payerProfile = Array.isArray(settlement.payer) ? settlement.payer[0] : settlement.payer;
-        const receiverProfile = Array.isArray(settlement.receiver) ? settlement.receiver[0] : settlement.receiver;
-
-        if (settlement.paid_by === user.id) {
-          const existing = balanceMap.get(settlement.paid_to) || { 
-            amount: 0, 
-            name: receiverProfile?.full_name || "", 
-            email: receiverProfile?.email || "" 
-          };
-          existing.amount += Number(settlement.amount);
-          balanceMap.set(settlement.paid_to, existing);
-        } else {
-          const existing = balanceMap.get(settlement.paid_by) || { 
-            amount: 0, 
-            name: payerProfile?.full_name || "", 
-            email: payerProfile?.email || "" 
-          };
-          existing.amount -= Number(settlement.amount);
-          balanceMap.set(settlement.paid_by, existing);
-        }
-      });
-
-      // Get profile names for users without them
-      const userIds = Array.from(balanceMap.keys()).filter(
-        (id) => !balanceMap.get(id)?.name
-      );
-
-      if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, full_name, email")
-          .in("user_id", userIds);
-
-        (profiles || []).forEach((profile) => {
-          const existing = balanceMap.get(profile.user_id);
-          if (existing) {
-            existing.name = profile.full_name || "";
-            existing.email = profile.email || "";
+      if (settlementsData && settlementsData.length > 0) {
+        console.log("🧮 Applying settlements...");
+        (settlementsData || []).forEach((settlement: any) => {
+          const amount = Number(settlement.amount);
+          
+          if (settlement.paid_by === user.id) {
+            const existing = balanceMap.get(settlement.paid_to) || { amount: 0, name: "", email: "" };
+            existing.amount += amount;
+            balanceMap.set(settlement.paid_to, existing);
+            console.log(`🔄 Settlement applied: +₹${amount}`);
+          } else if (settlement.paid_to === user.id) {
+            const existing = balanceMap.get(settlement.paid_by) || { amount: 0, name: "", email: "" };
+            existing.amount -= amount;
+            balanceMap.set(settlement.paid_by, existing);
+            console.log(`🔄 Settlement applied: -₹${amount}`);
           }
         });
       }
 
-      // Convert to array and filter out zero balances
+      // Get profile information
+      const userIds = Array.from(balanceMap.keys());
+      console.log("👥 Fetching profiles for", userIds.length, "users");
+      
+      if (userIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, email")
+          .in("user_id", userIds);
+
+        if (profilesError) {
+          console.error("❌ Error fetching profiles:", profilesError);
+        } else {
+          console.log("✅ Fetched profiles:", profiles?.length || 0);
+          (profiles || []).forEach((profile) => {
+            const existing = balanceMap.get(profile.user_id);
+            if (existing) {
+              existing.name = profile.full_name || "";
+              existing.email = profile.email || "";
+            }
+          });
+        }
+      }
+
+      // Convert to array
       const balanceArray: GroupBalance[] = Array.from(balanceMap.entries())
         .filter(([_, data]) => Math.abs(data.amount) > 0.01)
         .map(([userId, data]) => ({
           userId,
-          userName: data.name || "Unknown",
+          userName: data.name || data.email || "Unknown User",
           userEmail: data.email || "",
           amount: Math.round(data.amount * 100) / 100,
         }));
+
+      console.log("💰 Final group balances:", balanceArray);
 
       // Calculate totals
       let owed = 0;
       let owe = 0;
       balanceArray.forEach((b) => {
-        if (b.amount > 0) owed += b.amount;
-        else owe += Math.abs(b.amount);
+        if (b.amount > 0) {
+          owed += b.amount;
+        } else {
+          owe += Math.abs(b.amount);
+        }
       });
 
       setBalances(balanceArray);
       setTotalOwed(Math.round(owed * 100) / 100);
       setTotalOwe(Math.round(owe * 100) / 100);
+
+      console.log("✅ Group balance calculation complete");
+      console.log("📈 Total owed to you: ₹" + owed);
+      console.log("📉 Total you owe: ₹" + owe);
+      
     } catch (error: any) {
-      console.error("Error calculating group balances:", error);
+      console.error("❌ CRITICAL ERROR in calculateBalances:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      toast.error("Failed to calculate balances: " + (error.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -212,17 +272,26 @@ export function useGroupBalances(groupId?: string) {
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'settlements' },
-          () => calculateBalances()
+          () => {
+            console.log("🔔 Settlement changed in group, recalculating...");
+            calculateBalances();
+          }
         )
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'expenses' },
-          () => calculateBalances()
+          () => {
+            console.log("🔔 Expense changed in group, recalculating...");
+            calculateBalances();
+          }
         )
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'expense_splits' },
-          () => calculateBalances()
+          () => {
+            console.log("🔔 Split changed in group, recalculating...");
+            calculateBalances();
+          }
         )
         .subscribe();
 
