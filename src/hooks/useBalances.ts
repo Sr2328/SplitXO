@@ -236,6 +236,393 @@
 //   };
 // }
 
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+
+
+// import { useState, useEffect, useCallback } from "react";
+// import { supabase } from "@/integrations/supabase/client";
+// import { toast } from "sonner";
+
+// export interface Balance {
+//   userId: string;
+//   userName: string;
+//   userEmail: string;
+//   amount: number; // positive = they owe you, negative = you owe them
+// }
+
+// export interface Settlement {
+//   id: string;
+//   group_id: string;
+//   paid_by: string;
+//   paid_to: string;
+//   amount: number;
+//   notes: string | null;
+//   receipt_url: string | null;
+//   settled_at: string;
+//   payer?: {
+//     full_name: string | null;
+//     email: string | null;
+//   };
+//   receiver?: {
+//     full_name: string | null;
+//     email: string | null;
+//   };
+// }
+
+// export function useBalances() {
+//   const [balances, setBalances] = useState<Balance[]>([]);
+//   const [totalOwed, setTotalOwed] = useState(0);
+//   const [totalOwe, setTotalOwe] = useState(0);
+//   const [settlements, setSettlements] = useState<Settlement[]>([]);
+//   const [loading, setLoading] = useState(true);
+
+//   const calculateBalances = useCallback(async () => {
+//     try {
+//       console.log("🔄 Starting balance calculation...");
+      
+//       const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+//       if (userError) {
+//         console.error("❌ Auth error:", userError);
+//         toast.error("Authentication error: " + userError.message);
+//         setLoading(false);
+//         return;
+//       }
+      
+//       if (!user) {
+//         console.log("⚠️ No user logged in");
+//         setLoading(false);
+//         return;
+//       }
+
+//       console.log("👤 User ID:", user.id);
+
+//       // Step 1: Get all expense splits
+//       console.log("📊 Fetching all expense splits...");
+//       const { data: allSplits, error: splitsError } = await supabase
+//         .from("expense_splits")
+//         .select("id, expense_id, user_id, amount, is_settled")
+//         .eq("is_settled", false);
+
+//       if (splitsError) {
+//         console.error("❌ Error fetching splits:", splitsError);
+//         toast.error("Failed to fetch splits: " + splitsError.message);
+//         throw splitsError;
+//       }
+
+//       console.log("✅ Fetched splits:", allSplits?.length || 0);
+
+//       // Step 2: Get all expenses
+//       console.log("💰 Fetching all expenses...");
+//       const expenseIds = [...new Set((allSplits || []).map(s => s.expense_id))];
+      
+//       let allExpenses: any[] = [];
+//       if (expenseIds.length > 0) {
+//         const { data: expenses, error: expensesError } = await supabase
+//           .from("expenses")
+//           .select("id, paid_by, amount, title, group_id")
+//           .in("id", expenseIds);
+
+//         if (expensesError) {
+//           console.error("❌ Error fetching expenses:", expensesError);
+//           toast.error("Failed to fetch expenses: " + expensesError.message);
+//           throw expensesError;
+//         }
+
+//         allExpenses = expenses || [];
+//         console.log("✅ Fetched expenses:", allExpenses.length);
+//       }
+
+//       // Step 3: Get settlements
+//       console.log("🤝 Fetching settlements...");
+//       const { data: settlementsData, error: settlementsError } = await supabase
+//         .from("settlements")
+//         .select("id, group_id, paid_by, paid_to, amount, notes, receipt_url, settled_at")
+//         .or(`paid_by.eq.${user.id},paid_to.eq.${user.id}`)
+//         .order("settled_at", { ascending: false });
+
+//       if (settlementsError) {
+//         console.error("❌ Error fetching settlements:", settlementsError);
+//         // Don't throw, just log - settlements are optional
+//         console.log("⚠️ Continuing without settlements");
+//       }
+
+//       console.log("✅ Fetched settlements:", settlementsData?.length || 0);
+
+//       // Calculate balances
+//       const balanceMap = new Map<string, { amount: number; name: string; email: string }>();
+//       const expenseMap = new Map();
+      
+//       allExpenses.forEach(exp => {
+//         expenseMap.set(exp.id, exp);
+//       });
+
+//       console.log("🧮 Processing splits...");
+//       let processedCount = 0;
+
+//       // Process all splits
+//       (allSplits || []).forEach((split: any) => {
+//         const expense = expenseMap.get(split.expense_id);
+//         if (!expense) {
+//           console.log("⚠️ Expense not found for split:", split.expense_id);
+//           return;
+//         }
+
+//         const paidBy = expense.paid_by;
+//         const splitUser = split.user_id;
+//         const splitAmount = Number(split.amount);
+
+//         if (paidBy === user.id && splitUser !== user.id) {
+//           // Current user paid, someone else owes them
+//           const existing = balanceMap.get(splitUser) || { amount: 0, name: "", email: "" };
+//           existing.amount += splitAmount;
+//           balanceMap.set(splitUser, existing);
+//           console.log(`➕ ${splitUser.substring(0, 8)}... owes you ₹${splitAmount}`);
+//           processedCount++;
+//         } else if (splitUser === user.id && paidBy !== user.id) {
+//           // Someone else paid, current user owes them
+//           const existing = balanceMap.get(paidBy) || { amount: 0, name: "", email: "" };
+//           existing.amount -= splitAmount;
+//           balanceMap.set(paidBy, existing);
+//           console.log(`➖ You owe ${paidBy.substring(0, 8)}... ₹${splitAmount}`);
+//           processedCount++;
+//         }
+//       });
+
+//       console.log(`✅ Processed ${processedCount} relevant splits`);
+
+//       // Apply settlements
+//       if (settlementsData && settlementsData.length > 0) {
+//         console.log("🧮 Applying settlements...");
+//         (settlementsData || []).forEach((settlement: any) => {
+//           const amount = Number(settlement.amount);
+          
+//           if (settlement.paid_by === user.id) {
+//             const existing = balanceMap.get(settlement.paid_to) || { amount: 0, name: "", email: "" };
+//             existing.amount += amount;
+//             balanceMap.set(settlement.paid_to, existing);
+//             console.log(`🔄 Applied settlement: +₹${amount} from ${settlement.paid_to.substring(0, 8)}...`);
+//           } else if (settlement.paid_to === user.id) {
+//             const existing = balanceMap.get(settlement.paid_by) || { amount: 0, name: "", email: "" };
+//             existing.amount -= amount;
+//             balanceMap.set(settlement.paid_by, existing);
+//             console.log(`🔄 Applied settlement: -₹${amount} to ${settlement.paid_by.substring(0, 8)}...`);
+//           }
+//         });
+//       }
+
+//       // Get profile information
+//       const userIds = Array.from(balanceMap.keys());
+//       console.log("👥 Fetching profiles for", userIds.length, "users");
+      
+//       if (userIds.length > 0) {
+//         const { data: profiles, error: profilesError } = await supabase
+//           .from("profiles")
+//           .select("user_id, full_name, email")
+//           .in("user_id", userIds);
+
+//         if (profilesError) {
+//           console.error("❌ Error fetching profiles:", profilesError);
+//           // Don't throw - we can continue with user IDs
+//         } else {
+//           console.log("✅ Fetched profiles:", profiles?.length || 0);
+//           (profiles || []).forEach((profile) => {
+//             const existing = balanceMap.get(profile.user_id);
+//             if (existing) {
+//               existing.name = profile.full_name || "";
+//               existing.email = profile.email || "";
+//             }
+//           });
+//         }
+//       }
+
+//       // Convert to array
+//       const balanceArray: Balance[] = Array.from(balanceMap.entries())
+//         .filter(([_, data]) => Math.abs(data.amount) > 0.01)
+//         .map(([userId, data]) => ({
+//           userId,
+//           userName: data.name || data.email || "Unknown User",
+//           userEmail: data.email || "",
+//           amount: Math.round(data.amount * 100) / 100,
+//         }));
+
+//       console.log("💰 Final balances:", balanceArray);
+
+//       // Calculate totals
+//       let owed = 0;
+//       let owe = 0;
+//       balanceArray.forEach((b) => {
+//         if (b.amount > 0) {
+//           owed += b.amount;
+//         } else {
+//           owe += Math.abs(b.amount);
+//         }
+//       });
+
+//       setBalances(balanceArray);
+//       setTotalOwed(Math.round(owed * 100) / 100);
+//       setTotalOwe(Math.round(owe * 100) / 100);
+      
+//       // Format settlements with profile data
+//       const formattedSettlements = await Promise.all(
+//         (settlementsData || []).map(async (s: any) => {
+//           const { data: payerProfile } = await supabase
+//             .from("profiles")
+//             .select("full_name, email")
+//             .eq("user_id", s.paid_by)
+//             .single();
+          
+//           const { data: receiverProfile } = await supabase
+//             .from("profiles")
+//             .select("full_name, email")
+//             .eq("user_id", s.paid_to)
+//             .single();
+
+//           return {
+//             ...s,
+//             payer: payerProfile,
+//             receiver: receiverProfile,
+//           };
+//         })
+//       );
+
+//       setSettlements(formattedSettlements);
+
+//       console.log("✅ Balance calculation complete");
+//       console.log("📈 Total owed to you: ₹" + owed);
+//       console.log("📉 Total you owe: ₹" + owe);
+      
+//     } catch (error: any) {
+//       console.error("❌ CRITICAL ERROR in calculateBalances:", error);
+//       console.error("Error details:", {
+//         message: error.message,
+//         code: error.code,
+//         details: error.details,
+//         hint: error.hint
+//       });
+//       toast.error("Failed to calculate balances: " + (error.message || "Unknown error"));
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, []);
+
+//   const createSettlement = async (
+//     groupId: string,
+//     paidTo: string,
+//     amount: number,
+//     notes?: string
+//   ) => {
+//     try {
+//       const { data: { user } } = await supabase.auth.getUser();
+//       if (!user) throw new Error("Not authenticated");
+
+//       const { error } = await supabase.from("settlements").insert({
+//         group_id: groupId,
+//         paid_by: user.id,
+//         paid_to: paidTo,
+//         amount,
+//         notes,
+//       });
+
+//       if (error) throw error;
+
+//       await calculateBalances();
+//       toast.success("Settlement recorded!");
+//     } catch (error: any) {
+//       toast.error(error.message || "Failed to record settlement");
+//       throw error;
+//     }
+//   };
+
+//   useEffect(() => {
+//     calculateBalances();
+
+//     // Real-time subscription for auto-updates
+//     const channel = supabase
+//       .channel('balances-realtime')
+//       .on(
+//         'postgres_changes',
+//         { event: '*', schema: 'public', table: 'settlements' },
+//         () => {
+//           console.log("🔔 Settlement changed, recalculating...");
+//           calculateBalances();
+//         }
+//       )
+//       .on(
+//         'postgres_changes',
+//         { event: '*', schema: 'public', table: 'expenses' },
+//         () => {
+//           console.log("🔔 Expense changed, recalculating...");
+//           calculateBalances();
+//         }
+//       )
+//       .on(
+//         'postgres_changes',
+//         { event: '*', schema: 'public', table: 'expense_splits' },
+//         () => {
+//           console.log("🔔 Split changed, recalculating...");
+//           calculateBalances();
+//         }
+//       )
+//       .subscribe();
+
+//     return () => {
+//       supabase.removeChannel(channel);
+//     };
+//   }, [calculateBalances]);
+
+//   return {
+//     balances,
+//     totalOwed,
+//     totalOwe,
+//     settlements,
+//     loading,
+//     calculateBalances,
+//     createSettlement,
+//   };
+// }
+
+
+
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++++++====
+
 
 
 import { useState, useEffect, useCallback } from "react";
@@ -342,7 +729,6 @@ export function useBalances() {
 
       if (settlementsError) {
         console.error("❌ Error fetching settlements:", settlementsError);
-        // Don't throw, just log - settlements are optional
         console.log("⚠️ Continuing without settlements");
       }
 
@@ -371,6 +757,9 @@ export function useBalances() {
         const splitUser = split.user_id;
         const splitAmount = Number(split.amount);
 
+        // IMPORTANT: We're building a map from the current user's perspective
+        // Positive = they owe you, Negative = you owe them
+
         if (paidBy === user.id && splitUser !== user.id) {
           // Current user paid, someone else owes them
           const existing = balanceMap.get(splitUser) || { amount: 0, name: "", email: "" };
@@ -390,24 +779,49 @@ export function useBalances() {
 
       console.log(`✅ Processed ${processedCount} relevant splits`);
 
-      // Apply settlements
+      // Apply settlements - CRITICAL FIX
+      // A settlement represents: Person A paid Person B an amount
+      // From current user's perspective:
+      // - If I paid someone -> I've reduced what I owe them (or they now owe me less)
+      // - If someone paid me -> They've reduced what they owe me (or I now owe them less)
+      
       if (settlementsData && settlementsData.length > 0) {
         console.log("🧮 Applying settlements...");
+        console.log("Current user perspective: Building map from MY viewpoint");
+        
         (settlementsData || []).forEach((settlement: any) => {
           const amount = Number(settlement.amount);
+          const payer = settlement.paid_by;
+          const receiver = settlement.paid_to;
           
-          if (settlement.paid_by === user.id) {
-            const existing = balanceMap.get(settlement.paid_to) || { amount: 0, name: "", email: "" };
-            existing.amount += amount;
-            balanceMap.set(settlement.paid_to, existing);
-            console.log(`🔄 Applied settlement: +₹${amount} from ${settlement.paid_to.substring(0, 8)}...`);
-          } else if (settlement.paid_to === user.id) {
-            const existing = balanceMap.get(settlement.paid_by) || { amount: 0, name: "", email: "" };
+          console.log(`\n💰 Settlement: ${payer.substring(0,8)}... paid ${receiver.substring(0,8)}... ₹${amount}`);
+          
+          // Case 1: Current user PAID someone (I am the payer)
+          if (payer === user.id) {
+            // I paid someone, so from MY perspective:
+            // - If I owed them money: my debt decreases (moves towards positive)
+            // - The other person's balance from my view should decrease
+            const existing = balanceMap.get(receiver) || { amount: 0, name: "", email: "" };
+            const before = existing.amount;
             existing.amount -= amount;
-            balanceMap.set(settlement.paid_by, existing);
-            console.log(`🔄 Applied settlement: -₹${amount} to ${settlement.paid_by.substring(0, 8)}...`);
+            balanceMap.set(receiver, existing);
+            console.log(`   📤 YOU paid ${receiver.substring(0,8)}: balance ${before} -> ${existing.amount}`);
+          }
+          
+          // Case 2: Current user RECEIVED payment (I am the receiver)
+          else if (receiver === user.id) {
+            // Someone paid me, so from MY perspective:
+            // - If they owed me money: their debt to me decreases (moves towards zero)
+            // - The other person's balance from my view should decrease
+            const existing = balanceMap.get(payer) || { amount: 0, name: "", email: "" };
+            const before = existing.amount;
+            existing.amount -= amount;
+            balanceMap.set(payer, existing);
+            console.log(`   📥 YOU received from ${payer.substring(0,8)}: balance ${before} -> ${existing.amount}`);
           }
         });
+        
+        console.log("\n✅ All settlements applied");
       }
 
       // Get profile information
@@ -422,7 +836,6 @@ export function useBalances() {
 
         if (profilesError) {
           console.error("❌ Error fetching profiles:", profilesError);
-          // Don't throw - we can continue with user IDs
         } else {
           console.log("✅ Fetched profiles:", profiles?.length || 0);
           (profiles || []).forEach((profile) => {
@@ -445,7 +858,10 @@ export function useBalances() {
           amount: Math.round(data.amount * 100) / 100,
         }));
 
-      console.log("💰 Final balances:", balanceArray);
+      console.log("\n💰 Final balances:");
+      balanceArray.forEach(b => {
+        console.log(`   ${b.userName}: ${b.amount > 0 ? 'owes you' : 'you owe'} ₹${Math.abs(b.amount)}`);
+      });
 
       // Calculate totals
       let owed = 0;
@@ -487,7 +903,7 @@ export function useBalances() {
 
       setSettlements(formattedSettlements);
 
-      console.log("✅ Balance calculation complete");
+      console.log("\n✅ Balance calculation complete");
       console.log("📈 Total owed to you: ₹" + owed);
       console.log("📉 Total you owe: ₹" + owe);
       
