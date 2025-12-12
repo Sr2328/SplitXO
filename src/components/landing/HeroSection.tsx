@@ -1,18 +1,12 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Users, Receipt, TrendingUp } from "lucide-react";
+import { ArrowRight, Users, Receipt, TrendingUp, IndianRupee } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { AnimatedListDemo } from "../AnimatedListDemo";
 
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      "dotlottie-player": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
-        src: string;
-        background: string;
-        speed: string;
-        loop?: boolean;
-        autoplay?: boolean;
-      }, HTMLElement>;
+      "dotlottie-player": any;
     }
   }
 }
@@ -155,7 +149,7 @@ export function HeroSection() {
             delay={0}
           />
           <FeatureCard
-            icon={Receipt}
+            icon={IndianRupee}
             title="Expense Tracking"
             description="Log bills instantly"
             delay={0.1}
@@ -178,10 +172,6 @@ function LottieAnimationBackground() {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Check if script already exists
-    const existingScript = document.querySelector('script[src*="dotlottie-player"]');
-    if (existingScript) return;
-
     // Create script element for Lottie player
     const script = document.createElement("script");
     script.src = "https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs";
@@ -189,25 +179,25 @@ function LottieAnimationBackground() {
     document.body.appendChild(script);
 
     return () => {
-      // Don't remove the script to avoid re-loading issues
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
   return (
     <div 
       ref={containerRef} 
-      className="absolute inset-0 pointer-events-none z-0 opacity-20 lg:opacity-30 flex items-center justify-center lg:justify-start"
+      className="absolute left-0 top-0 w-1/2 h-full pointer-events-none z-0 opacity-30 hidden lg:block"
     >
-      <div className="w-full h-full max-w-2xl">
-        <dotlottie-player
-          src="https://lottie.host/8102ca17-0a7a-48c8-a1cb-199036f45561/515ZZa9CWV.lottie"
-          background="transparent"
-          speed="1"
-          style={{ width: "100%", height: "100%" }}
-          loop
-          autoplay
-        />
-      </div>
+      <dotlottie-player
+        src="https://lottie.host/8102ca17-0a7a-48c8-a1cb-199036f45561/515ZZa9CWV.lottie"
+        background="transparent"
+        speed="1"
+        style={{ width: "100%", height: "100%" }}
+        loop
+        autoplay
+      />
     </div>
   );
 }
@@ -224,28 +214,28 @@ function FeatureCard({
   delay: number;
 }) {
   return (
-    <div className="group relative bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 hover:shadow-xl hover:shadow-emerald-500/20 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-      {/* Subtle overlay pattern */}
-      <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <div className="group relative bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-5 md:p-6 shadow-lg shadow-gray-200/50 dark:shadow-gray-900/50 hover:shadow-2xl hover:shadow-emerald-500/20 dark:hover:shadow-emerald-500/30 hover:-translate-y-2 transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
+      {/* Gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-emerald-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-      <div className="relative z-10">
-        {/* Icon */}
-        <div className="mb-4">
+      <div className="relative z-10 flex flex-col items-start">
+        {/* Icon with background - fully rounded */}
+        <div className="mb-3 sm:mb-4 inline-flex p-2.5 sm:p-3 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-md shadow-emerald-500/20">
           <Icon
-            className="w-6 h-6 text-white/90 group-hover:text-white group-hover:scale-110 transition-all duration-300"
-            strokeWidth={1.5}
+            className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:scale-110 transition-transform duration-300"
+            strokeWidth={2}
           />
         </div>
 
         {/* Title */}
-        <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+        <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2 tracking-tight leading-tight">{title}</h3>
 
         {/* Description */}
-        <p className="text-sm text-white/80 leading-relaxed">{description}</p>
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed font-medium">{description}</p>
       </div>
 
       {/* Subtle shine effect */}
-      <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-emerald-500/5 to-transparent" />
     </div>
   );
 }
