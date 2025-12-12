@@ -11,6 +11,7 @@ import Groups from "./pages/Groups";
 import GroupDetail from "./pages/GroupDetail";
 import Expenses from "./pages/Expenses";
 import Settlements from "./pages/Settlements";
+import PersonalExpenses from "./pages/PersonalExpenses";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/expenses" element={<Expenses />} />
           <Route path="/expenses/:expenseId" element={<ExpenseDetail />} />
           <Route path="/settlements" element={<Settlements />} />
+          <Route path="/personal-expenses" element={<PersonalExpenses />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

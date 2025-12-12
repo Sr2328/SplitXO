@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   Bell,
+   Wallet,
   PlusCircle,
   ChevronRight,
   Search,
@@ -20,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -31,6 +33,7 @@ const navItems = [
   { href: "/groups", icon: Users, label: "Groups" },
   { href: "/expenses", icon: Receipt, label: "Expenses" },
  { href: "/settlements", icon: ArrowRightLeft, label: "Settlements" },
+  { href: "/personal-expenses", icon: Wallet, label: "Personal" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
 
@@ -169,14 +172,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
 
             {/* Right actions */}
             <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="relative rounded-xl hover:bg-muted"
-              >
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
-              </Button>
+             <NotificationBell></NotificationBell>
               
               {/* Desktop user avatar */}
               <div className="hidden lg:flex items-center gap-2 pl-2">

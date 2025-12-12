@@ -277,17 +277,80 @@ export function useExpenses(groupId?: string) {
     fetchExpenses();
 
     // Set up realtime subscription for expenses
+    // const channel = supabase
+    //   .channel('expenses-changes')
+    //   .on(
+    //     'postgres_changes',
+    //     {
+    //       event: '*',
+    //       schema: 'public',
+    //       table: 'expenses',
+    //     },
+    //     (payload) => {
+    //       console.log('📡 Realtime expense change:', payload);
+    //       fetchExpenses();
+    //     }
+    //   )
+    //   .subscribe();
+
+    // return () => {
+    //   supabase.removeChannel(channel);
+    // };
     const channel = supabase
-      .channel('expenses-changes')
+      .channel('expenses-realtime')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
+          schema: 'public',
+          table: 'expenses',
+        },
+        async (payload) => {
+          // Fetch the new expense with its relations
+          const { data } = await supabase
+            .from("expenses")
+            .select(`
+              *,
+              group:groups(name),
+              payer:profiles!expenses_paid_by_fkey(full_name, email)
+            `)
+            .eq("id", payload.new.id)
+            .single();
+
+          if (data) {
+            const formattedExpense = {
+              ...data,
+              group: Array.isArray(data.group) ? data.group[0] : data.group,
+              payer: Array.isArray(data.payer) ? data.payer[0] : data.payer,
+            } as unknown as Expense;
+            
+            // Only add if it matches the groupId filter (if any)
+            if (!groupId || formattedExpense.group_id === groupId) {
+              setExpenses(prev => [formattedExpense, ...prev]);
+            }
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
           schema: 'public',
           table: 'expenses',
         },
         (payload) => {
-          console.log('📡 Realtime expense change:', payload);
+          setExpenses(prev => prev.filter(e => e.id !== payload.old.id));
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'expenses',
+        },
+        () => {
+          // Refetch on update to get latest data with relations
           fetchExpenses();
         }
       )
