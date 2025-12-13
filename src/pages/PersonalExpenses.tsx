@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
-import { Plus, Wallet, Calendar, TrendingUp, Trash2, ArrowLeft, IndianRupee, Edit2, BarChart3 } from "lucide-react";
+import { Plus, Wallet, Calendar, TrendingUp, Trash2, ArrowLeft, IndianRupee, Edit2, BarChart3, Receipt, TrendingDown } from "lucide-react";
 import { ExpenseCharts } from "@/components/charts/ExpenseCharts";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+
 interface PersonalExpense {
   id: string;
   user_id: string;
@@ -58,6 +60,7 @@ const getCategoryColor = (category: string) => {
 export default function PersonalExpenses() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [user, setUser] = useState<any>(null);
   const [expenses, setExpenses] = useState<PersonalExpense[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -73,8 +76,23 @@ export default function PersonalExpenses() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    checkUser();
     fetchExpenses();
   }, []);
+
+  const checkUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
+      setUser(user);
+    } catch (error: any) {
+      console.error("Error checking user:", error);
+      navigate("/auth");
+    }
+  };
 
   const fetchExpenses = async () => {
     try {
@@ -251,163 +269,143 @@ export default function PersonalExpenses() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/dashboard")}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+    <DashboardLayout user={user}>
+      <div className="p-4 md:p-6 lg:p-8 space-y-6">
+        {/* Header with Balance Card */}
+        <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 rounded-2xl p-6 md:p-8 text-white shadow-xl">
+          <div className="flex items-start justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Personal Expenses</h1>
-              <p className="text-muted-foreground text-sm">Track your personal spending</p>
+              <p className="text-emerald-100 text-sm uppercase tracking-wide mb-2">BALANCE AMOUNT</p>
+              <div className="flex items-baseline gap-2">
+                <IndianRupee className="h-8 w-8 md:h-10 md:w-10" />
+                <h1 className="text-4xl md:text-5xl font-bold">{monthlyTotal.toFixed(2)}</h1>
+              </div>
+              <div className="mt-3 inline-block bg-emerald-400/30 px-3 py-1 rounded-full">
+                <p className="text-xs text-white">You've spent this month</p>
+              </div>
             </div>
+            <Button
+              onClick={() => setIsAddModalOpen(true)}
+              size="icon"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white rounded-xl h-12 w-12"
+            >
+              <Plus className="h-6 w-6" />
+            </Button>
           </div>
-          <Dialog open={isAddModalOpen} onOpenChange={(open) => {
-            setIsAddModalOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Expense
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{editingExpense ? "Edit Expense" : "Add Personal Expense"}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Expense title"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount (₹)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date">Date</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={expenseDate}
-                    onChange={(e) => setExpenseDate(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes (Optional)</Label>
-                  <Textarea
-                    id="notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Any additional details..."
-                    rows={3}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? "Saving..." : editingExpense ? "Update Expense" : "Add Expense"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="bg-card border-border">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/20">
-                  <Wallet className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Expenses</p>
-                  <p className="text-xl font-bold text-foreground flex items-center">
-                    <IndianRupee className="h-4 w-4" />
-                    {totalExpenses.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
+  <CardContent className="p-5">
+    <div className="flex items-center justify-between mb-3">
+      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+        <TrendingUp className="h-6 w-6 text-white" />
+      </div>
+    </div>
+    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Total Expenses</p>
+    <div className="flex items-baseline gap-1">
+      <IndianRupee className="h-5 w-5 text-gray-700" />
+      <p className="text-2xl font-bold text-gray-900">{totalExpenses.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>
+    </div>
+    <p className="text-xs text-gray-400 mt-2">All time</p>
+  </CardContent>
+</Card>
 
-          <Card className="bg-card border-border">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-500/20">
-                  <Calendar className="h-5 w-5 text-green-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">This Month</p>
-                  <p className="text-xl font-bold text-foreground flex items-center">
-                    <IndianRupee className="h-4 w-4" />
-                    {monthlyTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* THIS MONTH */}
+<Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
+  <CardContent className="p-5">
+    <div className="flex items-center justify-between mb-3">
+      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+        <Receipt className="h-6 w-6 text-white" />
+      </div>
+    </div>
 
-          <Card className="bg-card border-border">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-500/20">
-                  <TrendingUp className="h-5 w-5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Transactions</p>
-                  <p className="text-xl font-bold text-foreground">{expenses.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
+      This Month
+    </p>
+
+    <div className="flex items-baseline gap-1">
+      <IndianRupee className="h-5 w-5 text-gray-700" />
+      <p className="text-2xl font-bold text-gray-900">
+        {monthlyTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+      </p>
+    </div>
+
+    <p className="text-xs text-gray-400 mt-2">
+      {format(parseISO(`${selectedMonth}-01`), "MMMM yyyy")}
+    </p>
+  </CardContent>
+</Card>
+
+{/* TRANSACTIONS */}
+<Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
+  <CardContent className="p-5">
+    <div className="flex items-center justify-between mb-3">
+      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+        <BarChart3 className="h-6 w-6 text-white" />
+      </div>
+    </div>
+
+    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
+      Transactions
+    </p>
+
+    <p className="text-2xl font-bold text-gray-900">
+      {monthlyExpenses.length}
+    </p>
+
+    <p className="text-xs text-gray-400 mt-2">
+      This month
+    </p>
+  </CardContent>
+</Card>
+
+{/* AVG PER DAY */}
+<Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
+  <CardContent className="p-5">
+    <div className="flex items-center justify-between mb-3">
+      <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+        <TrendingDown className="h-6 w-6 text-white" />
+      </div>
+    </div>
+
+    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
+      Avg per day
+    </p>
+
+    <div className="flex items-baseline gap-1">
+      <IndianRupee className="h-5 w-5 text-gray-700" />
+      <p className="text-2xl font-bold text-gray-900">
+        {monthlyExpenses.length > 0
+          ? (
+              monthlyTotal /
+              new Date(
+                parseISO(`${selectedMonth}-01`).getFullYear(),
+                parseISO(`${selectedMonth}-01`).getMonth() + 1,
+                0
+              ).getDate()
+            ).toLocaleString("en-IN", { minimumFractionDigits: 2 })
+          : "0.00"}
+      </p>
+    </div>
+
+    <p className="text-xs text-gray-400 mt-2">
+      Daily average
+    </p>
+  </CardContent>
+</Card>
+
         </div>
 
-        {/* Expense Charts */}
+        {/* Charts Section */}
         <ExpenseCharts expenses={expenses} selectedMonth={selectedMonth} />
 
         {/* Monthly Report Section */}
-        <Card className="bg-card border-border mb-6">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Monthly Report</CardTitle>
+              <CardTitle className="text-lg font-semibold">Monthly Report</CardTitle>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue />
@@ -460,64 +458,166 @@ export default function PersonalExpenses() {
           </CardContent>
         </Card>
 
-        {/* Expenses List */}
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">
-              Expenses in {format(parseISO(`${selectedMonth}-01`), "MMMM yyyy")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* Recent Expenses Section */}
+        <Card className="bg-card border-border shadow-sm">
+          <div className="p-4 md:p-6 border-b border-border flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Recent Expenses</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">Last transactions</p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setIsAddModalOpen(true)}
+              className="text-primary hover:text-primary"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+          </div>
+          <CardContent className="p-0">
             {monthlyExpenses.length > 0 ? (
-              <div className="space-y-3">
-                {monthlyExpenses.map((expense) => (
+              <div className="divide-y divide-border">
+                {monthlyExpenses.slice(0, 5).map((expense) => (
                   <div
                     key={expense.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                    className="p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => handleEdit(expense)}
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-medium text-foreground">{expense.title}</h3>
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${getCategoryColor(expense.category)}`}>
-                          {expense.category}
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-lg font-bold text-primary">
+                          {expense.category.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {format(parseISO(expense.expense_date), "dd MMM yyyy")}
-                        {expense.notes && ` • ${expense.notes}`}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-foreground flex items-center">
-                        <IndianRupee className="h-4 w-4" />
-                        {expense.amount.toLocaleString("en-IN")}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(expense)}
-                      >
-                        <Edit2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(expense.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground text-base">{expense.title}</h3>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {expense.notes && `${expense.notes} • `}
+                          {format(parseISO(expense.expense_date), "dd MMM yyyy")}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-red-600 text-lg flex items-center">
+                          -<IndianRupee className="h-4 w-4" />
+                          {expense.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {format(parseISO(expense.expense_date), "dd MMM, yyyy")}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-8">
-                No expenses recorded for this month. Click "Add Expense" to start tracking.
-              </p>
+              <div className="p-12 text-center">
+                <Receipt className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
+                <p className="text-muted-foreground text-lg">No expenses recorded</p>
+                <p className="text-sm text-muted-foreground/70 mt-1">Click the + button to add your first expense</p>
+              </div>
             )}
           </CardContent>
         </Card>
+
+        {/* Add/Edit Dialog */}
+        <Dialog open={isAddModalOpen} onOpenChange={(open) => {
+          setIsAddModalOpen(open);
+          if (!open) resetForm();
+        }}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="text-xl">{editingExpense ? "Edit Expense" : "Add Personal Expense"}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-sm font-medium">Title</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g., Dinner at restaurant"
+                  className="h-11"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount" className="text-sm font-medium">Amount (₹)</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="h-11"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category" className="text-sm font-medium">Category</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="date" className="text-sm font-medium">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={expenseDate}
+                  onChange={(e) => setExpenseDate(e.target.value)}
+                  className="h-11"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes" className="text-sm font-medium">Notes (Optional)</Label>
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add any additional details..."
+                  rows={3}
+                  className="resize-none"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                {editingExpense && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => {
+                      handleDelete(editingExpense.id);
+                      setIsAddModalOpen(false);
+                    }}
+                    className="flex-1"
+                  >
+                    Delete
+                  </Button>
+                )}
+                <Button 
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                >
+                  {submitting ? "Saving..." : editingExpense ? "Update" : "Add Expense"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
