@@ -227,55 +227,61 @@ export function DashboardHome({ user }: DashboardHomeProps) {
   </motion.div>
 
   {/* Enhanced Your Groups */}
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }} 
-    animate={{ opacity: 1, y: 0 }} 
-    transition={{ duration: 0.5, delay: 0.45 }} 
-    className="bg-card rounded-2xl border border-border/50 shadow-lg p-6"
-  >
-    <div className="flex items-center justify-between mb-6">
-      <div>
-        <h2 className="text-xl md:text-2xl font-bold text-foreground">Your Groups</h2>
-        <p className="text-xs text-muted-foreground mt-1">Manage your groups</p>
+  <motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5, delay: 0.45 }}
+  className="bg-card rounded-2xl border border-border/50 shadow-lg p-6"
+>
+  {/* Header */}
+  <div className="flex items-center justify-between mb-6">
+    <div>
+      <h2 className="text-xl md:text-2xl font-bold text-foreground">Your Groups</h2>
+      <p className="text-xs text-muted-foreground mt-1">Manage your groups</p>
+    </div>
+    <Button
+      size="sm"
+      variant="ghost"
+      onClick={() => setCreateGroupOpen(true)}
+      className="h-10 w-10 p-0 rounded-xl hover:bg-muted/50 transition-all hover:scale-105"
+    >
+      <Plus className="h-5 w-5" />
+    </Button>
+  </div>
+
+  {/* No Groups Placeholder */}
+  {groups.length === 0 ? (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="p-4 rounded-2xl bg-muted/50 mb-4">
+        <Users className="h-10 w-10 text-muted-foreground" />
       </div>
-      <Button 
-        size="sm" 
-        variant="ghost"
-        onClick={() => setCreateGroupOpen(true)}
-        className="h-10 w-10 p-0 rounded-xl hover:bg-muted/50 transition-all hover:scale-105"
-      >
-        <Plus className="h-5 w-5" />
+      <h3 className="font-semibold text-foreground text-lg mb-2">No groups yet</h3>
+      <p className="text-sm text-muted-foreground mb-6 max-w-[250px]">
+        Create a group to start splitting expenses
+      </p>
+      <Button size="sm" onClick={() => setCreateGroupOpen(true)} className="rounded-xl shadow-sm">
+        <Plus className="h-4 w-4 mr-2" />
+        Create Group
       </Button>
     </div>
-    
-    {groups.length === 0 ? (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="p-4 rounded-2xl bg-muted/50 mb-4">
-          <Users className="h-10 w-10 text-muted-foreground" />
-        </div>
-        <h3 className="font-semibold text-foreground text-lg mb-2">No groups yet</h3>
-        <p className="text-sm text-muted-foreground mb-6 max-w-[250px]">Create a group to start splitting expenses</p>
-        <Button size="sm" onClick={() => setCreateGroupOpen(true)} className="rounded-xl shadow-sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Create Group
-        </Button>
-      </div>
-    ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {groups.slice(0, 4).map((group, i) => (
-          <GroupCard 
-            key={group.id} 
-            group={group} 
-            onEdit={() => {}} 
-            onDelete={(g) => deleteGroup(g.id)} 
-            onManageMembers={handleManageMembers} 
-            onClick={() => {}} 
-            delay={i * 0.05} 
-          />
-        ))}
-      </div>
-    )}
-  </motion.div>
+  ) : (
+    // Groups Grid: 2 cards per row on phones, 4 on desktop
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {groups.slice(0, 4).map((group, i) => (
+        <GroupCard
+          key={group.id}
+          group={group}
+          onEdit={() => {}}
+          onDelete={(g) => deleteGroup(g.id)}
+          onManageMembers={handleManageMembers}
+          onClick={() => {}}
+          delay={i * 0.05}
+        />
+      ))}
+    </div>
+  )}
+</motion.div>
+
 </>
 
       {/* Modals */}

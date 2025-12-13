@@ -484,15 +484,16 @@ export default function GroupDetail() {
           className="space-y-4"
         >
           <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/groups")}
-            className="gap-2 hover:bg-accent"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Back to Groups</span>
-            <span className="sm:hidden">Back</span>
-          </Button>
+  variant="ghost"
+  size="sm"
+  onClick={() => navigate("/groups")}
+  className="gap-2 origin-left transform transition-transform duration-200 ease-out hover:scale-x-[1.05]"
+>
+  <ArrowLeft className="h-4 w-4" />
+  <span className="hidden sm:inline">Back to Groups</span>
+  <span className="sm:hidden">Back</span>
+</Button>
+
 
           <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 border-border/50">
             <CardContent className="p-4 sm:p-6">
