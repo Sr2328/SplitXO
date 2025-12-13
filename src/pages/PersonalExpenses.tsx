@@ -39,6 +39,15 @@ const CATEGORIES = [
   "personal",
   "other"
 ];
+const getCategoryIcon = (category: string) => {
+  const icons: Record<string, string> = {
+    food: "🍔", transport: "🚗", entertainment: "🎬",
+    shopping: "🛍️", utilities: "⚡", rent: "🏠",
+    travel: "✈️", healthcare: "⚕️", education: "📚",
+    personal: "👤", other: "📋",
+  };
+  return icons[category] || icons.other;
+};
 
 const getCategoryColor = (category: string) => {
   const colors: Record<string, string> = {
@@ -270,7 +279,8 @@ export default function PersonalExpenses() {
 
   return (
     <DashboardLayout user={user}>
-      <div className="p-4 md:p-6 lg:p-8 space-y-6">
+      <div className=" space-y-6"> 
+        {/* p-4 md:p-6 lg:p-8 */}
         {/* Header with Balance Card */}
         <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 rounded-2xl p-6 md:p-8 text-white shadow-xl">
           <div className="flex items-start justify-between mb-6">
@@ -316,7 +326,7 @@ export default function PersonalExpenses() {
 <Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
   <CardContent className="p-5">
     <div className="flex items-center justify-between mb-3">
-      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
         <Receipt className="h-6 w-6 text-white" />
       </div>
     </div>
@@ -342,7 +352,7 @@ export default function PersonalExpenses() {
 <Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
   <CardContent className="p-5">
     <div className="flex items-center justify-between mb-3">
-      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
         <BarChart3 className="h-6 w-6 text-white" />
       </div>
     </div>
@@ -365,7 +375,7 @@ export default function PersonalExpenses() {
 <Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
   <CardContent className="p-5">
     <div className="flex items-center justify-between mb-3">
-      <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
         <TrendingDown className="h-6 w-6 text-white" />
       </div>
     </div>
@@ -402,64 +412,65 @@ export default function PersonalExpenses() {
         <ExpenseCharts expenses={expenses} selectedMonth={selectedMonth} />
 
         {/* Monthly Report Section */}
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader className="pb-3">
+       <Card className="bg-card border-border shadow-lg">
+  <CardHeader className="pb-3">
+    <div className="flex items-center justify-between">
+      <CardTitle className="text-lg font-semibold">Monthly Report      </CardTitle>
+      <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {availableMonths.map((month) => (
+            <SelectItem key={month} value={month}>
+              {format(parseISO(`${month}-01`), "MMMM yyyy")}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  </CardHeader>
+  <CardContent>
+    {categoryBreakdown.length > 0 ? (
+      <div className="space-y-3">
+        {categoryBreakdown.map(({ category, amount }) => (
+          <div key={category} className="bg-muted/50 rounded-xl p-4 hover:bg-muted transition-colors shadow-sm">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold">Monthly Report</CardTitle>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableMonths.map((month) => (
-                    <SelectItem key={month} value={month}>
-                      {format(parseISO(`${month}-01`), "MMMM yyyy")}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {categoryBreakdown.length > 0 ? (
-              <div className="space-y-3">
-                {categoryBreakdown.map(({ category, amount }) => (
-                  <div key={category} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(category)}`}>
-                        {category.charAt(0).toUpperCase() + category.slice(1)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-32 bg-muted rounded-full h-2 overflow-hidden">
-                        <div
-                          className="h-full bg-primary rounded-full transition-all"
-                          style={{ width: `${(amount / monthlyTotal) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium text-foreground w-24 text-right flex items-center justify-end">
-                        <IndianRupee className="h-3 w-3" />
-                        {amount.toLocaleString("en-IN")}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                <div className="pt-3 border-t border-border flex justify-between">
-                  <span className="font-medium text-foreground">Total</span>
-                  <span className="font-bold text-foreground flex items-center">
-                    <IndianRupee className="h-4 w-4" />
-                    {monthlyTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-3 py-1.5 rounded-lg text-xs font-medium ${getCategoryColor(category)}`}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </span>
               </div>
-            ) : (
-              <p className="text-muted-foreground text-center py-4">No expenses for this month</p>
-            )}
-          </CardContent>
-        </Card>
-
+              <div className="flex items-center gap-3">
+                <div className="w-32 bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full transition-all"
+                    style={{ width: `${(amount / monthlyTotal) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm font-semibold text-red-600 w-24 text-right flex items-center justify-end">
+                  <IndianRupee className="h-3 w-3" />
+                  {amount.toLocaleString("en-IN")}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+        <div className="pt-3 mt-3 border-t-2 border-border flex justify-between items-center bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 shadow-sm">
+          <span className="font-semibold text-foreground">Total</span>
+          <span className="font-bold text-foreground flex items-center text-lg">
+            <IndianRupee className="h-4 w-4" />
+            {monthlyTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      </div>
+    ) : (
+      <p className="text-muted-foreground text-center py-8">No expenses for this month</p>
+    )}
+  </CardContent>
+</Card>
         {/* Recent Expenses Section */}
-        <Card className="bg-card border-border shadow-sm">
+        {/* <Card className="bg-card border-border shadow-sm">
           <div className="p-4 md:p-6 border-b border-border flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-foreground">Recent Expenses</h2>
@@ -518,7 +529,67 @@ export default function PersonalExpenses() {
               </div>
             )}
           </CardContent>
-        </Card>
+        </Card> */}
+
+<Card className="bg-white border border-gray-100 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-2xl overflow-hidden">
+  <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-gray-50 to-white">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
+  <img
+    src="/public/expenses.png"   // path to your PNG
+    alt="Receipt"
+    className="w-5 h-5 object-contain"
+  />
+</div>
+
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Recent Expenses</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Latest transactions</p>
+        </div>
+      </div>
+      <Button onClick={() => setIsAddModalOpen(true)} className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+        <Plus className="h-4 w-4 mr-2" />
+        Add New
+      </Button>
+    </div>
+  </div>
+  <CardContent className="p-0">
+    {monthlyExpenses.length > 0 ? (
+      <div className="divide-y divide-border">
+        {monthlyExpenses.slice(0, 5).map((expense) => (
+          <div
+            key={expense.id}
+            className="p-5 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
+            onClick={() => handleEdit(expense)}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow text-2xl">
+                {getCategoryIcon(expense.category)}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 text-base mb-1">{expense.title}</h3>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-0.5 rounded-md text-xs font-medium border ${getCategoryColor(expense.category)}`}>
+                    {expense.category}
+                  </span>
+                </div>
+              </div>
+              <p className="font-bold text-red-600 text-lg flex items-center">
+                -<IndianRupee className="h-4 w-4" />{expense.amount.toLocaleString("en-IN")}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="p-12 text-center">
+        <Receipt className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
+        <p className="text-muted-foreground text-lg">No expenses recorded</p>
+      </div>
+    )}
+  </CardContent>
+</Card>
 
         {/* Add/Edit Dialog */}
         <Dialog open={isAddModalOpen} onOpenChange={(open) => {
