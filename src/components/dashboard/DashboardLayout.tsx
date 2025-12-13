@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Search,
   ArrowRightLeft,
+  IndianRupeeIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +38,7 @@ interface DashboardLayoutProps {
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/groups", icon: Users, label: "Groups" },
-  { href: "/expenses", icon: Receipt, label: "Expenses" },
+  { href: "/expenses", icon: IndianRupeeIcon, label: "Expenses" },
   { href: "/settlements", icon: ArrowRightLeft, label: "Settlements" },
   { href: "/personal-expenses", icon: Wallet, label: "Personal" },
   { href: "/settings", icon: Settings, label: "Settings" },

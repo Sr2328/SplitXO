@@ -11,6 +11,7 @@ import {
   Calendar,
   DollarSign,
   IndianRupee,
+  IndianRupeeIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -140,7 +141,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
           title="Expenses" 
           value={String(expenses.length)} 
           subtitle="This month" 
-          icon={Receipt} 
+          icon={Calendar} 
           trend="neutral" 
           delay={0.3} 
         />
@@ -201,7 +202,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
     {expenses.length === 0 ? (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="p-4 rounded-2xl bg-muted/50 mb-4">
-          <Receipt className="h-10 w-10 text-muted-foreground" />
+          <IndianRupeeIcon className="h-10 w-10 text-muted-foreground" />
         </div>
         <h3 className="font-semibold text-foreground text-lg mb-2">No expenses yet</h3>
         <p className="text-sm text-muted-foreground mb-6 max-w-[250px]">Start tracking by adding your first expense</p>

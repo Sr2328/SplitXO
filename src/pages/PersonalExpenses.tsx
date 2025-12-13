@@ -305,108 +305,101 @@ export default function PersonalExpenses() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
-  <CardContent className="p-5">
-    <div className="flex items-center justify-between mb-3">
-      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-        <TrendingUp className="h-6 w-6 text-white" />
-      </div>
-    </div>
-    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Total Expenses</p>
-    <div className="flex items-baseline gap-1">
-      <IndianRupee className="h-5 w-5 text-gray-700" />
-      <p className="text-2xl font-bold text-gray-900">{totalExpenses.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>
-    </div>
-    <p className="text-xs text-gray-400 mt-2">All time</p>
-  </CardContent>
-</Card>
-
-      {/* THIS MONTH */}
-<Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
-  <CardContent className="p-5">
-    <div className="flex items-center justify-between mb-3">
-      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-        <Receipt className="h-6 w-6 text-white" />
-      </div>
-    </div>
-
-    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
-      This Month
-    </p>
-
-    <div className="flex items-baseline gap-1">
-      <IndianRupee className="h-5 w-5 text-gray-700" />
-      <p className="text-2xl font-bold text-gray-900">
-        {monthlyTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-      </p>
-    </div>
-
-    <p className="text-xs text-gray-400 mt-2">
-      {format(parseISO(`${selectedMonth}-01`), "MMMM yyyy")}
-    </p>
-  </CardContent>
-</Card>
-
-{/* TRANSACTIONS */}
-<Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
-  <CardContent className="p-5">
-    <div className="flex items-center justify-between mb-3">
-      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-        <BarChart3 className="h-6 w-6 text-white" />
-      </div>
-    </div>
-
-    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
-      Transactions
-    </p>
-
-    <p className="text-2xl font-bold text-gray-900">
-      {monthlyExpenses.length}
-    </p>
-
-    <p className="text-xs text-gray-400 mt-2">
-      This month
-    </p>
-  </CardContent>
-</Card>
-
-{/* AVG PER DAY */}
-<Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
-  <CardContent className="p-5">
-    <div className="flex items-center justify-between mb-3">
-      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-        <TrendingDown className="h-6 w-6 text-white" />
-      </div>
-    </div>
-
-    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
-      Avg per day
-    </p>
-
-    <div className="flex items-baseline gap-1">
-      <IndianRupee className="h-5 w-5 text-gray-700" />
-      <p className="text-2xl font-bold text-gray-900">
-        {monthlyExpenses.length > 0
-          ? (
-              monthlyTotal /
-              new Date(
-                parseISO(`${selectedMonth}-01`).getFullYear(),
-                parseISO(`${selectedMonth}-01`).getMonth() + 1,
-                0
-              ).getDate()
-            ).toLocaleString("en-IN", { minimumFractionDigits: 2 })
-          : "0.00"}
-      </p>
-    </div>
-
-    <p className="text-xs text-gray-400 mt-2">
-      Daily average
-    </p>
-  </CardContent>
-</Card>
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  {/* TOTAL EXPENSES */}
+  <Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
+    <CardContent className="p-4 sm:p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+          <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
         </div>
+      </div>
+      <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Total Expenses</p>
+      <div className="flex items-baseline gap-1">
+        <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700 flex-shrink-0" />
+        <p className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+          {totalExpenses.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+        </p>
+      </div>
+      <p className="text-xs text-gray-400 mt-2">All time</p>
+    </CardContent>
+  </Card>
+
+  {/* THIS MONTH */}
+  <Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
+    <CardContent className="p-4 sm:p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+          <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+        </div>
+      </div>
+      <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
+        This Month
+      </p>
+      <div className="flex items-baseline gap-1">
+        <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700 flex-shrink-0" />
+        <p className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+          {monthlyTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+        </p>
+      </div>
+      <p className="text-xs text-gray-400 mt-2">
+        {format(parseISO(`${selectedMonth}-01`), "MMMM yyyy")}
+      </p>
+    </CardContent>
+  </Card>
+
+  {/* TRANSACTIONS */}
+  <Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
+    <CardContent className="p-4 sm:p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+          <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+        </div>
+      </div>
+      <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
+        Transactions
+      </p>
+      <p className="text-xl sm:text-2xl font-bold text-gray-900">
+        {monthlyExpenses.length}
+      </p>
+      <p className="text-xs text-gray-400 mt-2">
+        This month
+      </p>
+    </CardContent>
+  </Card>
+
+  {/* AVG PER DAY */}
+  <Card className="bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 rounded-2xl overflow-hidden group hover:-translate-y-1">
+    <CardContent className="p-4 sm:p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+          <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+        </div>
+      </div>
+      <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
+        Avg per day
+      </p>
+      <div className="flex items-baseline gap-1">
+        <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700 flex-shrink-0" />
+        <p className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+          {monthlyExpenses.length > 0
+            ? (
+                monthlyTotal /
+                new Date(
+                  parseISO(`${selectedMonth}-01`).getFullYear(),
+                  parseISO(`${selectedMonth}-01`).getMonth() + 1,
+                  0
+                ).getDate()
+              ).toLocaleString("en-IN", { minimumFractionDigits: 2 })
+            : "0.00"}
+        </p>
+      </div>
+      <p className="text-xs text-gray-400 mt-2">
+        Daily average
+      </p>
+    </CardContent>
+  </Card>
+</div>
 
         {/* Charts Section */}
         <ExpenseCharts expenses={expenses} selectedMonth={selectedMonth} />
