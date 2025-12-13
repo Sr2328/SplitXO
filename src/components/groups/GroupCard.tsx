@@ -218,7 +218,22 @@ export function GroupCard({
           <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-white/60" />
         </div>
 
-        {/* Actions Menu */}
+        {/* Group Icon/Image - Centered at Top */}
+        <div className="relative z-[1] flex justify-center items-start pt-2 sm:pt-3">
+          {group.image_url ? (
+            <img 
+              src={group.image_url} 
+              alt={group.name}
+              className="h-14 w-14 sm:h-16 sm:w-16 lg:h-20 lg:w-20 rounded-xl object-cover border-3 border-white/50 shadow-lg group-hover/card:scale-105 transition-transform"
+            />
+          ) : (
+            <div className="h-14 w-14 sm:h-16 sm:w-16 lg:h-20 lg:w-20 rounded-xl bg-white/20 backdrop-blur-md border-3 border-white/50 flex items-center justify-center shadow-lg group-hover/card:scale-105 group-hover/card:bg-white/30 transition-all">
+              <Users className="h-7 w-7 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-white" />
+            </div>
+          )}
+        </div>
+
+        {/* Actions Menu - Top Right Corner */}
         <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -248,21 +263,6 @@ export function GroupCard({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-        
-        {/* Group Icon/Image */}
-        <div className="relative z-[1]">
-          {group.image_url ? (
-            <img 
-              src={group.image_url} 
-              alt={group.name}
-              className="h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 rounded-xl object-cover border-2 border-white/50 shadow-lg group-hover/card:scale-105 transition-transform"
-            />
-          ) : (
-            <div className="h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 rounded-xl bg-white/20 backdrop-blur-md border-2 border-white/50 flex items-center justify-center shadow-lg group-hover/card:scale-105 group-hover/card:bg-white/30 transition-all">
-              <Users className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-white" />
-            </div>
-          )}
         </div>
       </div>
 
