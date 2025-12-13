@@ -132,77 +132,93 @@ export default function Expenses() {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
       </div>
     );
   }
 
   return (
     <DashboardLayout user={user}>
-      <div className="space-y-6">
-        {/* Enhanced Header */}
+      <div className="space-y-6 pb-8">
+        {/* Enhanced Responsive Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          className="flex flex-col gap-4"
         >
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Expenses</h1>
-            <p className="text-muted-foreground mt-2 text-sm font-medium">Track and manage all your shared expenses</p>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
+                Expenses
+              </h1>
+              <p className="text-muted-foreground mt-1.5 text-xs sm:text-sm font-medium">
+                Track and manage all your shared expenses
+              </p>
+            </div>
+            <Button 
+              onClick={() => setAddExpenseOpen(true)}
+              className="rounded-xl shadow-sm hover:shadow-md transition-all bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Expense
+            </Button>
           </div>
-          <Button 
-            onClick={() => setAddExpenseOpen(true)}
-            className="rounded-xl shadow-sm hover:shadow-md transition-all"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Expense
-          </Button>
         </motion.div>
 
-        {/* Enhanced Summary Cards */}
+        {/* Enhanced Summary Cards - Fully Responsive */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
         >
-          <div className="bg-card rounded-2xl border border-border/50 shadow-md p-6 hover:shadow-lg transition-all">
-            <div className="flex items-center gap-3 mb-4">
-              <div className={cn("p-2.5 rounded-xl", netBalance >= 0 ? "bg-success/10" : "bg-destructive/10")}>
-                <Wallet className={cn("h-5 w-5", netBalance >= 0 ? "text-success" : "text-destructive")} />
+          <div className="bg-card rounded-xl border border-border/50 shadow-md p-4 sm:p-5 lg:p-6 hover:shadow-lg transition-all">
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className={cn("p-2 sm:p-2.5 rounded-xl", netBalance >= 0 ? "bg-teal-500/10" : "bg-destructive/10")}>
+                <Wallet className={cn("h-4 w-4 sm:h-5 sm:w-5", netBalance >= 0 ? "text-teal-600" : "text-destructive")} />
               </div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Net Balance</span>
+              <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Net Balance
+              </span>
             </div>
-            <p className={cn("text-3xl font-bold tracking-tight", netBalance >= 0 ? "text-success" : "text-destructive")}>
+            <p className={cn("text-2xl sm:text-3xl font-bold tracking-tight", netBalance >= 0 ? "text-teal-600" : "text-destructive")}>
               {netBalance >= 0 ? "+" : "-"}₹{Math.abs(netBalance).toFixed(2)}
             </p>
-            <p className="text-xs text-muted-foreground mt-2 font-medium">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2 font-medium">
               {netBalance >= 0 ? "You're owed overall" : "You owe overall"}
             </p>
           </div>
 
-          <div className="bg-card rounded-2xl border border-border/50 shadow-md p-6 hover:shadow-lg transition-all">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 rounded-xl bg-destructive/10">
-                <ArrowUpRight className="h-5 w-5 text-destructive" />
+          <div className="bg-card rounded-xl border border-border/50 shadow-md p-4 sm:p-5 lg:p-6 hover:shadow-lg transition-all">
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-destructive/10">
+                <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />
               </div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">You Owe</span>
+              <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                You Owe
+              </span>
             </div>
-            <p className="text-3xl font-bold text-foreground tracking-tight">₹{totalOwe.toFixed(2)}</p>
-            <p className="text-xs text-muted-foreground mt-2 font-medium">
+            <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+              ₹{totalOwe.toFixed(2)}
+            </p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2 font-medium">
               To {balances.filter((b) => b.amount < 0).length} people
             </p>
           </div>
 
-          <div className="bg-card rounded-2xl border border-border/50 shadow-md p-6 hover:shadow-lg transition-all">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 rounded-xl bg-success/10">
-                <ArrowDownRight className="h-5 w-5 text-success" />
+          <div className="bg-card rounded-xl border border-border/50 shadow-md p-4 sm:p-5 lg:p-6 hover:shadow-lg transition-all sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-500/10">
+                <ArrowDownRight className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
               </div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">You're Owed</span>
+              <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                You're Owed
+              </span>
             </div>
-            <p className="text-3xl font-bold text-foreground tracking-tight">₹{totalOwed.toFixed(2)}</p>
-            <p className="text-xs text-muted-foreground mt-2 font-medium">
+            <p className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+              ₹{totalOwed.toFixed(2)}
+            </p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2 font-medium">
               From {balances.filter((b) => b.amount > 0).length} people
             </p>
           </div>
@@ -214,31 +230,38 @@ export default function Expenses() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="bg-card rounded-[2rem] border border-border/50 shadow-lg p-6 md:p-7"
+            className="bg-card rounded-xl border border-border/50 shadow-lg p-4 sm:p-5 lg:p-7"
           >
-            <div className="mb-6">
-              <h2 className="text-xl md:text-2xl font-bold text-foreground">Settle Up</h2>
-              <p className="text-xs text-muted-foreground mt-1">Clear your balances with friends</p>
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">Settle Up</h2>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Clear your balances with friends</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
               {balances.map((balance) => (
                 <div
                   key={balance.userId}
-                  className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 hover:bg-secondary/70 transition-colors"
+                  className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-gradient-to-br from-teal-500/5 to-emerald-500/5 hover:from-teal-500/10 hover:to-emerald-500/10 transition-colors border border-teal-500/10"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <div className="h-9 w-9 sm:h-11 sm:w-11 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-md flex-shrink-0">
                       {balance.userName.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <p className="font-semibold text-foreground text-sm">{balance.userName}</p>
-                      <p className={cn("text-xs font-semibold", balance.amount > 0 ? "text-success" : "text-destructive")}>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-foreground text-xs sm:text-sm truncate">
+                        {balance.userName}
+                      </p>
+                      <p className={cn("text-[10px] sm:text-xs font-semibold truncate", balance.amount > 0 ? "text-emerald-600" : "text-destructive")}>
                         {balance.amount > 0 ? `Owes you ₹${balance.amount.toFixed(2)}` : `You owe ₹${Math.abs(balance.amount).toFixed(2)}`}
                       </p>
                     </div>
                   </div>
                   {balance.amount < 0 && (
-                    <Button size="sm" variant="outline" onClick={() => handleSettle(balance)} className="rounded-xl">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleSettle(balance)} 
+                      className="rounded-xl ml-2 flex-shrink-0 text-xs border-teal-500/20 hover:bg-teal-500/10 hover:border-teal-500/30"
+                    >
                       Settle
                     </Button>
                   )}
@@ -248,28 +271,28 @@ export default function Expenses() {
           </motion.div>
         )}
 
-        {/* Enhanced Filters */}
+        {/* Enhanced Responsive Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="flex flex-col sm:flex-row gap-3"
+          className="flex flex-col gap-3"
         >
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-teal-600/60" />
             <Input
               placeholder="Search expenses..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 h-12 rounded-xl border-border/50 focus:border-primary/50 transition-colors"
+              className="pl-10 sm:pl-11 h-11 sm:h-12 rounded-xl border-teal-500/20 focus:border-teal-500/50 bg-gradient-to-br from-teal-500/5 to-emerald-500/5 transition-colors text-sm"
             />
           </div>
-          <div className="flex gap-2">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1 sm:flex-initial">
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value as ExpenseCategory | "all")}
-                className="appearance-none rounded-xl border border-border/50 bg-background px-4 py-3 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer hover:bg-muted/30 transition-colors"
+                className="appearance-none w-full rounded-xl border border-teal-500/20 bg-gradient-to-br from-teal-500/5 to-emerald-500/5 px-3 sm:px-4 py-2.5 sm:py-3 pr-9 sm:pr-10 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/50 cursor-pointer hover:from-teal-500/10 hover:to-emerald-500/10 transition-colors"
               >
                 <option value="all">All Categories</option>
                 {Object.keys(categoryEmoji).map((cat) => (
@@ -278,13 +301,13 @@ export default function Expenses() {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <ChevronDown className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-teal-600/60 pointer-events-none" />
             </div>
-            <div className="relative">
+            <div className="relative flex-1 sm:flex-initial">
               <select
                 value={selectedGroupId}
                 onChange={(e) => setSelectedGroupId(e.target.value)}
-                className="appearance-none rounded-xl border border-border/50 bg-background px-4 py-3 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer hover:bg-muted/30 transition-colors"
+                className="appearance-none w-full rounded-xl border border-teal-500/20 bg-gradient-to-br from-teal-500/5 to-emerald-500/5 px-3 sm:px-4 py-2.5 sm:py-3 pr-9 sm:pr-10 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/50 cursor-pointer hover:from-teal-500/10 hover:to-emerald-500/10 transition-colors"
               >
                 <option value="all">All Groups</option>
                 {groups.map((group) => (
@@ -293,41 +316,44 @@ export default function Expenses() {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <ChevronDown className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-teal-600/60 pointer-events-none" />
             </div>
           </div>
         </motion.div>
 
-        {/* Enhanced Expenses List */}
+        {/* Enhanced Responsive Expenses List */}
         {filteredExpenses.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
-            className="bg-card rounded-[2rem] border border-border/50 shadow-lg p-16 text-center"
+            className="bg-card rounded-xl border border-border/50 shadow-lg p-8 sm:p-12 lg:p-16 text-center"
           >
-            <div className="p-5 rounded-2xl bg-muted/50 inline-block mb-6">
-              <Receipt className="h-10 w-10 text-muted-foreground" />
+            <div className="p-4 sm:p-5 rounded-full bg-gradient-to-br from-teal-500/10 to-emerald-500/10 inline-block mb-4 sm:mb-6">
+              <Receipt className="h-8 w-8 sm:h-10 sm:w-10 text-teal-600" />
             </div>
-            <h3 className="font-bold text-foreground mb-3 text-xl">
+            <h3 className="font-bold text-foreground mb-2 sm:mb-3 text-lg sm:text-xl">
               {searchQuery || selectedCategory !== "all" || selectedGroupId !== "all"
                 ? "No expenses found"
                 : "No expenses yet"}
             </h3>
-            <p className="text-muted-foreground mb-6 text-sm max-w-[300px] mx-auto">
+            <p className="text-muted-foreground mb-4 sm:mb-6 text-xs sm:text-sm max-w-[300px] mx-auto">
               {searchQuery || selectedCategory !== "all" || selectedGroupId !== "all"
                 ? "Try different filters"
                 : "Start tracking by adding your first expense"}
             </p>
             {!searchQuery && selectedCategory === "all" && selectedGroupId === "all" && (
-              <Button onClick={() => setAddExpenseOpen(true)} className="rounded-xl shadow-sm">
+              <Button 
+                onClick={() => setAddExpenseOpen(true)} 
+                className="rounded-xl shadow-sm bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Expense
               </Button>
             )}
           </motion.div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2.5 sm:space-y-3">
             <AnimatePresence mode="popLayout">
               {filteredExpenses.map((expense, index) => (
                 <motion.div
@@ -336,39 +362,43 @@ export default function Expenses() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.03 }}
-                  className="bg-card rounded-2xl border border-border/50 shadow-md hover:shadow-lg overflow-hidden transition-all"
+                  className="bg-card rounded-xl border border-border/50 shadow-md hover:shadow-lg overflow-hidden transition-all"
                 >
                   <div
-                    className="p-5 cursor-pointer hover:bg-secondary/30 transition-colors"
+                    className="p-3 sm:p-4 lg:p-5 cursor-pointer hover:bg-gradient-to-br hover:from-teal-500/5 hover:to-emerald-500/5 transition-colors"
                     onClick={() => handleExpandExpense(expense.id)}
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2.5 sm:gap-3 lg:gap-4">
                       {/* Enhanced Category Icon */}
-                      <div className={cn("h-14 w-14 rounded-xl flex items-center justify-center text-2xl shadow-sm", categoryColors[expense.category])}>
+                      <div className={cn("h-11 w-11 sm:h-12 sm:w-12 lg:h-14 lg:w-14 rounded-xl flex items-center justify-center text-xl sm:text-2xl shadow-sm flex-shrink-0", categoryColors[expense.category])}>
                         {categoryEmoji[expense.category]}
                       </div>
 
                       {/* Enhanced Details */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <h3 className="font-bold text-foreground text-lg truncate">{expense.title}</h3>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1.5">
-                              <span className="flex items-center gap-1.5 font-medium">
-                                <Users className="h-3.5 w-3.5" />
-                                {expense.group?.name || "Unknown"}
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-bold text-foreground text-sm sm:text-base lg:text-lg truncate">
+                              {expense.title}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-1.5">
+                              <span className="flex items-center gap-1 sm:gap-1.5 font-medium">
+                                <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                                <span className="truncate max-w-[100px] sm:max-w-none">{expense.group?.name || "Unknown"}</span>
                               </span>
-                              <span>•</span>
-                              <span className="flex items-center gap-1.5">
-                                <Calendar className="h-3.5 w-3.5" />
-                                {format(new Date(expense.expense_date), "MMM d, yyyy")}
+                              <span className="hidden sm:inline">•</span>
+                              <span className="flex items-center gap-1 sm:gap-1.5">
+                                <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                                <span className="whitespace-nowrap">{format(new Date(expense.expense_date), "MMM d, yyyy")}</span>
                               </span>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-xl font-bold text-foreground tracking-tight">₹{Number(expense.amount).toFixed(2)}</p>
-                            <p className="text-xs text-muted-foreground font-medium mt-0.5">
-                              paid by {expense.paid_by === user.id ? "You" : expense.payer?.full_name || expense.payer?.email || "Unknown"}
+                          <div className="text-right flex-shrink-0 ml-2">
+                            <p className="text-base sm:text-lg lg:text-xl font-bold text-foreground tracking-tight whitespace-nowrap">
+                              ₹{Number(expense.amount).toFixed(2)}
+                            </p>
+                            <p className="text-[9px] sm:text-[10px] lg:text-xs text-muted-foreground font-medium mt-0.5 whitespace-nowrap">
+                              {expense.paid_by === user.id ? "You paid" : "Paid"}
                             </p>
                           </div>
                         </div>
@@ -376,7 +406,7 @@ export default function Expenses() {
 
                       <ChevronDown
                         className={cn(
-                          "h-5 w-5 text-muted-foreground transition-transform flex-shrink-0",
+                          "h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground transition-transform flex-shrink-0",
                           expandedExpenseId === expense.id && "rotate-180"
                         )}
                       />
@@ -392,31 +422,31 @@ export default function Expenses() {
                         exit={{ height: 0, opacity: 0 }}
                         className="border-t border-border/50 overflow-hidden"
                       >
-                        <div className="p-5 bg-secondary/20">
-                          <h4 className="text-sm font-bold text-foreground mb-4">Split Breakdown</h4>
+                        <div className="p-3 sm:p-4 lg:p-5 bg-gradient-to-br from-teal-500/5 to-emerald-500/5">
+                          <h4 className="text-xs sm:text-sm font-bold text-foreground mb-3 sm:mb-4">Split Breakdown</h4>
                           {expenseSplits[expense.id]?.length ? (
-                            <div className="space-y-2.5">
+                            <div className="space-y-2 sm:space-y-2.5">
                               {expenseSplits[expense.id].map((split) => (
                                 <div
                                   key={split.id}
-                                  className="flex items-center justify-between py-3 px-4 rounded-xl bg-background shadow-sm"
+                                  className="flex items-center justify-between py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl bg-background shadow-sm"
                                 >
-                                  <div className="flex items-center gap-3">
-                                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-primary text-sm font-bold">
+                                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                                    <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-gradient-to-br from-teal-500/20 to-emerald-500/20 flex items-center justify-center text-teal-600 text-xs sm:text-sm font-bold flex-shrink-0">
                                       {(split.profile?.full_name || split.profile?.email || "?").charAt(0).toUpperCase()}
                                     </div>
-                                    <span className="text-sm font-medium text-foreground">
+                                    <span className="text-xs sm:text-sm font-medium text-foreground truncate">
                                       {split.user_id === user.id
                                         ? "You"
                                         : split.profile?.full_name || split.profile?.email || "Unknown"}
                                     </span>
                                   </div>
-                                  <div className="flex items-center gap-3">
-                                    <span className="text-sm font-bold text-foreground">
+                                  <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                                    <span className="text-xs sm:text-sm font-bold text-foreground whitespace-nowrap">
                                       ₹{Number(split.amount).toFixed(2)}
                                     </span>
                                     {split.is_settled && (
-                                      <span className="text-xs px-2.5 py-1 rounded-full bg-success/10 text-success font-semibold">
+                                      <span className="text-[9px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold whitespace-nowrap">
                                         Settled
                                       </span>
                                     )}
@@ -425,11 +455,11 @@ export default function Expenses() {
                               ))}
                             </div>
                           ) : (
-                            <p className="text-sm text-muted-foreground">Loading splits...</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground">Loading splits...</p>
                           )}
                           {expense.notes && (
-                            <div className="mt-5 pt-5 border-t border-border/50">
-                              <p className="text-sm text-muted-foreground">
+                            <div className="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-border/50">
+                              <p className="text-xs sm:text-sm text-muted-foreground">
                                 <span className="font-semibold">Notes:</span> {expense.notes}
                               </p>
                             </div>
@@ -450,33 +480,35 @@ export default function Expenses() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-card rounded-[2rem] border border-border/50 shadow-lg p-6 md:p-7"
+            className="bg-card rounded-xl border border-border/50 shadow-lg p-4 sm:p-5 lg:p-7"
           >
-            <div className="mb-6">
-              <h2 className="text-xl md:text-2xl font-bold text-foreground">Recent Settlements</h2>
-              <p className="text-xs text-muted-foreground mt-1">Payment history</p>
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">Recent Settlements</h2>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Payment history</p>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2.5 sm:space-y-3">
               {settlements.slice(0, 5).map((settlement) => (
                 <div
                   key={settlement.id}
-                  className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 hover:bg-secondary/70 transition-colors"
+                  className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 hover:from-emerald-500/10 hover:to-teal-500/10 transition-colors border border-emerald-500/10"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-full bg-success/10 flex items-center justify-center">
-                      <Wallet className="h-5 w-5 text-success" />
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <div className="h-9 w-9 sm:h-11 sm:w-11 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                      <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs sm:text-sm font-medium text-foreground truncate">
                         {settlement.paid_by === user.id ? "You" : settlement.payer?.full_name || "Someone"} paid{" "}
                         {settlement.paid_to === user.id ? "you" : settlement.receiver?.full_name || "someone"}
                       </p>
-                      <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground font-medium mt-0.5">
                         {format(new Date(settlement.settled_at), "MMM d, yyyy")}
                       </p>
                     </div>
                   </div>
-                  <span className="text-sm font-bold text-success">₹{Number(settlement.amount).toFixed(2)}</span>
+                  <span className="text-xs sm:text-sm font-bold text-emerald-600 flex-shrink-0 whitespace-nowrap">
+                    ₹{Number(settlement.amount).toFixed(2)}
+                  </span>
                 </div>
               ))}
             </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { motion } from "framer-motion";
 import {
@@ -10,7 +10,7 @@ import {
   Menu,
   X,
   Bell,
-   Wallet,
+  Wallet,
   PlusCircle,
   ChevronRight,
   Search,
@@ -23,6 +23,12 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
+interface Profile {
+  avatar_url: string | null;
+  full_name: string | null;
+  email: string | null;
+}
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
   user: User;
@@ -32,15 +38,59 @@ const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/groups", icon: Users, label: "Groups" },
   { href: "/expenses", icon: Receipt, label: "Expenses" },
- { href: "/settlements", icon: ArrowRightLeft, label: "Settlements" },
+  { href: "/settlements", icon: ArrowRightLeft, label: "Settlements" },
   { href: "/personal-expenses", icon: Wallet, label: "Personal" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
 
 export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Fetch user profile on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("avatar_url, full_name, email")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error) throw error;
+        setProfile(data);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+
+    fetchProfile();
+
+    // Subscribe to profile changes
+    const channel = supabase
+      .channel("profile-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "profiles",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            setProfile(payload.new as Profile);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user.id]);
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -51,8 +101,43 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
     }
   };
 
-  const userName = user.user_metadata?.full_name || user.email?.split("@")[0] || "User";
-  const userInitial = userName.charAt(0).toUpperCase();
+  // Get user name from profile or fallback to email
+  const userName =
+    profile?.full_name ||
+    user.user_metadata?.full_name ||
+    user.email?.split("@")[0] ||
+    "User";
+
+  // Get initials
+  const nameParts = userName.trim().split(" ");
+  let userInitial = "";
+  if (nameParts.length === 1) {
+    userInitial = nameParts[0].charAt(0).toUpperCase();
+  } else {
+    userInitial =
+      nameParts[0].charAt(0).toUpperCase() +
+      nameParts[nameParts.length - 1].charAt(0).toUpperCase();
+  }
+
+  // Avatar component
+  const Avatar = ({ className = "h-10 w-10" }: { className?: string }) => {
+    return profile?.avatar_url ? (
+      <img
+        src={profile.avatar_url}
+        alt={userName}
+        className={cn("rounded-full object-cover shadow-sm", className)}
+      />
+    ) : (
+      <div
+        className={cn(
+          "rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold shadow-sm",
+          className
+        )}
+      >
+        {userInitial}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
@@ -82,8 +167,12 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
               className="h-12 w-12 object-cover"
             />
             <div>
-              <span className="font-bold text-xl text-foreground block leading-none">SplitXo</span>
-              <span className="text-xs text-muted-foreground">Split Smart, Move Fast.</span>
+              <span className="font-bold text-xl text-foreground block leading-none">
+                SplitXo
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Split Smart, Move Fast.
+              </span>
             </div>
           </div>
 
@@ -102,9 +191,13 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
-                  <item.icon className={cn("h-5 w-5", isActive && "text-white")} />
+                  <item.icon
+                    className={cn("h-5 w-5", isActive && "text-white")}
+                  />
                   <span className="flex-1">{item.label}</span>
-                  {isActive && <div className="h-2 w-2 rounded-full bg-white"></div>}
+                  {isActive && (
+                    <div className="h-2 w-2 rounded-full bg-white"></div>
+                  )}
                 </Link>
               );
             })}
@@ -113,12 +206,14 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           {/* User section */}
           <div className="p-4 border-t border-border/50">
             <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 mb-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold shadow-sm">
-                {userInitial}
-              </div>
+              <Avatar />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">{userName}</p>
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {userName}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user.email}
+                </p>
               </div>
             </div>
             <Button
@@ -162,7 +257,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Search for patients or medicine..."
+                  placeholder="Search expenses or groups..."
                   className="w-full pl-10 pr-4 py-2 rounded-xl bg-muted/50 border border-transparent focus:border-teal-500 focus:bg-white transition-all outline-none text-sm"
                 />
               </div>
@@ -172,13 +267,11 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
 
             {/* Right actions */}
             <div className="flex items-center gap-2">
-             <NotificationBell></NotificationBell>
-              
+              <NotificationBell />
+
               {/* Desktop user avatar */}
               <div className="hidden lg:flex items-center gap-2 pl-2">
-                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm">
-                  {userInitial}
-                </div>
+                <Avatar className="h-9 w-9" />
               </div>
             </div>
           </div>
@@ -213,16 +306,18 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
                 to={item.href}
                 className={cn(
                   "flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors",
-                  isActive
-                    ? "text-teal-600"
-                    : "text-muted-foreground"
+                  isActive ? "text-teal-600" : "text-muted-foreground"
                 )}
               >
-                <div className={cn(
-                  "p-2 rounded-xl transition-all",
-                  isActive && "bg-teal-50"
-                )}>
-                  <item.icon className={cn("h-5 w-5", isActive && "text-teal-600")} />
+                <div
+                  className={cn(
+                    "p-2 rounded-xl transition-all",
+                    isActive && "bg-teal-50"
+                  )}
+                >
+                  <item.icon
+                    className={cn("h-5 w-5", isActive && "text-teal-600")}
+                  />
                 </div>
                 <span className="text-[10px]">{item.label}</span>
               </Link>
@@ -241,15 +336,23 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between p-6 border-b border-border/50">
-            <Link to="/dashboard" className="flex items-center gap-3" onClick={() => setSidebarOpen(false)}>
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-3"
+              onClick={() => setSidebarOpen(false)}
+            >
               <img
                 src="https://i.postimg.cc/wv9dQrMw/Gemini-Generated-Image-8a0kyv8a0kyv8a0k-(2).png"
                 alt="icon"
                 className="h-12 w-12 object-cover"
               />
               <div>
-                <span className="font-bold text-xl text-foreground block leading-none">SplitXo</span>
-                <span className="text-xs text-muted-foreground">Split Smart, Move Fast.</span>
+                <span className="font-bold text-xl text-foreground block leading-none">
+                  SplitXo
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Split Smart, Move Fast.
+                </span>
               </div>
             </Link>
             <button
@@ -276,9 +379,13 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
                   )}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <item.icon className={cn("h-5 w-5", isActive && "text-white")} />
+                  <item.icon
+                    className={cn("h-5 w-5", isActive && "text-white")}
+                  />
                   <span className="flex-1">{item.label}</span>
-                  {isActive && <div className="h-2 w-2 rounded-full bg-white"></div>}
+                  {isActive && (
+                    <div className="h-2 w-2 rounded-full bg-white"></div>
+                  )}
                 </Link>
               );
             })}
@@ -287,12 +394,14 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           {/* User section */}
           <div className="p-4 border-t border-border/50">
             <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 mb-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold shadow-sm">
-                {userInitial}
-              </div>
+              <Avatar />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">{userName}</p>
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {userName}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user.email}
+                </p>
               </div>
             </div>
             <Button
