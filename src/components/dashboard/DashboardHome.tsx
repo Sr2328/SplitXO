@@ -12,6 +12,7 @@ import {
   DollarSign,
   IndianRupee,
   IndianRupeeIcon,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ import { ExpenseCard } from "@/components/expenses/ExpenseCard";
 import { BalanceCard } from "@/components/balances/BalanceCard";
 import { SettleModal } from "@/components/balances/SettleModal";
 import { Group } from "@/hooks/useGroups";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardHomeProps {
   user: User;
@@ -45,6 +47,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [selectedBalance, setSelectedBalance] = useState<Balance | null>(null);
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
+  const navigate = useNavigate();
 
   const handleManageMembers = (group: Group) => {
     setSelectedGroup(group);
@@ -227,60 +230,78 @@ export function DashboardHome({ user }: DashboardHomeProps) {
   </motion.div>
 
   {/* Enhanced Your Groups */}
-  <motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.5, delay: 0.45 }}
-  className="bg-card rounded-2xl border border-border/50 shadow-lg p-6"
->
-  {/* Header */}
-  <div className="flex items-center justify-between mb-6">
-    <div>
-      <h2 className="text-xl md:text-2xl font-bold text-foreground">Your Groups</h2>
-      <p className="text-xs text-muted-foreground mt-1">Manage your groups</p>
-    </div>
-    <Button
-      size="sm"
-      variant="ghost"
-      onClick={() => setCreateGroupOpen(true)}
-      className="h-10 w-10 p-0 rounded-xl hover:bg-muted/50 transition-all hover:scale-105"
+<motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.45 }}
+      className="bg-card rounded-2xl border border-border/50 shadow-lg p-4 sm:p-6"
     >
-      <Plus className="h-5 w-5" />
-    </Button>
-  </div>
-
-  {/* No Groups Placeholder */}
-  {groups.length === 0 ? (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="p-4 rounded-2xl bg-muted/50 mb-4">
-        <Users className="h-10 w-10 text-muted-foreground" />
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5 sm:mb-6">
+        <div>
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">Your Groups</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Manage your groups</p>
+        </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setCreateGroupOpen(true)}
+          className="h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-xl hover:bg-muted/50 transition-all hover:scale-105"
+        >
+          <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+        </Button>
       </div>
-      <h3 className="font-semibold text-foreground text-lg mb-2">No groups yet</h3>
-      <p className="text-sm text-muted-foreground mb-6 max-w-[250px]">
-        Create a group to start splitting expenses
-      </p>
-      <Button size="sm" onClick={() => setCreateGroupOpen(true)} className="rounded-xl shadow-sm">
-        <Plus className="h-4 w-4 mr-2" />
-        Create Group
-      </Button>
-    </div>
-  ) : (
-    // Groups Grid: 2 cards per row on phones, 4 on desktop
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {groups.slice(0, 4).map((group, i) => (
-        <GroupCard
-          key={group.id}
-          group={group}
-          onEdit={() => {}}
-          onDelete={(g) => deleteGroup(g.id)}
-          onManageMembers={handleManageMembers}
-          onClick={() => {}}
-          delay={i * 0.05}
-        />
-      ))}
-    </div>
-  )}
-</motion.div>
+
+      {/* No Groups Placeholder */}
+      {groups.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
+          <div className="p-3 sm:p-4 rounded-2xl bg-muted/50 mb-3 sm:mb-4">
+            <Users className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
+          </div>
+          <h3 className="font-semibold text-foreground text-base sm:text-lg mb-2">No groups yet</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6 max-w-[250px]">
+            Create a group to start splitting expenses
+          </p>
+          <Button size="sm" onClick={() => setCreateGroupOpen(true)} className="rounded-xl shadow-sm text-xs sm:text-sm">
+            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+            Create Group
+          </Button>
+        </div>
+      ) : (
+        <>
+          {/* Groups Grid: 1 col mobile, 2 col tablet, 4 col desktop */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+            {groups.slice(0, 4).map((group, i) => (
+              <GroupCard
+                key={group.id}
+                group={group}
+                onEdit={() => {}}
+                onDelete={(g) => deleteGroup(g.id)}
+                onManageMembers={handleManageMembers}
+                onClick={() => {}}
+                delay={i * 0.05}
+              />
+            ))}
+          </div>
+
+          {/* View All Button - Only show if more than 4 groups */}
+          {groups.length > 4 && (
+            <div className="flex justify-center pt-2 sm:pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/groups")}
+                className="rounded-xl gap-2 text-xs sm:text-sm origin-center transform transition-transform duration-200 ease-out hover:scale-x-[1.05]"
+              >
+                View All Groups
+                <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+    </motion.div>
+ 
 
 </>
 
