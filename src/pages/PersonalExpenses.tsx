@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
-import { Plus, Wallet, Calendar, TrendingUp, Trash2, ArrowLeft, IndianRupee, Edit2, BarChart3, Receipt, TrendingDown } from "lucide-react";
+import { Plus, Wallet, Calendar, TrendingUp, Trash2, ArrowLeft, IndianRupee, Edit2, BarChart3, Receipt, TrendingDown, IndianRupeeIcon } from "lucide-react";
 import { ExpenseCharts } from "@/components/charts/ExpenseCharts";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 
@@ -530,7 +530,7 @@ export default function PersonalExpenses() {
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
   <img
-    src="/public/expenses.png"   // path to your PNG
+    src="https://i.postimg.cc/BZzSYs5B/expenses.png"   // path to your PNG
     alt="Receipt"
     className="w-5 h-5 object-contain"
   />
@@ -577,7 +577,7 @@ export default function PersonalExpenses() {
       </div>
     ) : (
       <div className="p-12 text-center">
-        <Receipt className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
+        <IndianRupeeIcon className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
         <p className="text-muted-foreground text-lg">No expenses recorded</p>
       </div>
     )}

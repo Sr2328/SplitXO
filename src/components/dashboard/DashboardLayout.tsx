@@ -4,18 +4,15 @@ import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Users,
-  Receipt,
   Settings,
   LogOut,
   Menu,
   X,
   Bell,
   Wallet,
-  PlusCircle,
-  ChevronRight,
-  Search,
   ArrowRightLeft,
-  IndianRupeeIcon,
+  DollarSign,
+  IndianRupee,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,7 +35,7 @@ interface DashboardLayoutProps {
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/groups", icon: Users, label: "Groups" },
-  { href: "/expenses", icon: IndianRupeeIcon, label: "Expenses" },
+  { href: "/expenses", icon: IndianRupee, label: "Expenses" },
   { href: "/settlements", icon: ArrowRightLeft, label: "Settlements" },
   { href: "/personal-expenses", icon: Wallet, label: "Personal" },
   { href: "/settings", icon: Settings, label: "Settings" },
@@ -233,7 +230,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
       <div className="lg:pl-72 pb-20 lg:pb-0">
         {/* Top bar - Desktop & Mobile */}
         <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-border/50">
-          <div className="flex items-center justify-between h-16 px-4 md:px-6">
+          <div className="flex items-center justify-between h-24 px-4 md:px-6">
             {/* Mobile menu button */}
             <button
               className="lg:hidden p-2 text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted transition-colors"
@@ -252,17 +249,13 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
               <span className="font-bold text-lg">SplitXo</span>
             </Link>
 
-            {/* Search bar - Desktop only */}
-            <div className="hidden lg:flex flex-1 max-w-md">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search expenses or groups..."
-                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-muted/50 border border-transparent focus:border-teal-500 focus:bg-white transition-all outline-none text-sm"
-                />
-              </div>
-            </div>
+            {/* Lottie Animation - Desktop & Mobile */}
+            <motion.div className="flex">
+              <iframe
+                src="https://lottie.host/embed/5827f91a-f8dd-4e99-865a-fa1c3c726145/LdV4goNDtF.lottie"
+                style={{ border: "none", height: "64px", width: "64px" }}
+              ></iframe>
+            </motion.div>
 
             <div className="flex-1 lg:flex-none" />
 
@@ -277,18 +270,6 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
             </div>
           </div>
         </header>
-
-        {/* Mobile Search Bar */}
-        <div className="lg:hidden px-4 pt-4 pb-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted/50 border border-transparent focus:border-teal-500 focus:bg-white transition-all outline-none text-sm"
-            />
-          </div>
-        </div>
 
         {/* Page content */}
         <main className="p-4 md:p-6 lg:p-8 min-h-[calc(100vh-4rem)]">
