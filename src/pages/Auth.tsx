@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthForm } from "@/components/auth/AuthForm";
+import  AuthForm from "@/components/auth/AuthForm";
 import { Receipt } from "lucide-react";
 import { Link } from "react-router-dom";
 
