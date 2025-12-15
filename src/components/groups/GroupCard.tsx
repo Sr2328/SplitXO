@@ -331,14 +331,14 @@ export function GroupCard({
             )}
 
             {/* Member Count - Right Side */}
-            <div className="flex items-center gap-1 ml-auto">
+            {/* <div className="flex items-center gap-1 ml-auto">
               <div className="p-1 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950 dark:to-teal-950 shadow-sm flex items-center justify-center">
                 <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <span className="text-xs sm:text-sm font-semibold text-foreground">
                 {memberCount}
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
