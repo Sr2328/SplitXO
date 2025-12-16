@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { AnimatedListDemo } from "../AnimatedListDemo";
 import { Link } from "react-router-dom";
+import GetStarted from "../ui/GetStarted";
 
 declare global {
   namespace JSX {
@@ -255,14 +256,14 @@ export function HeroSection() {
             </motion.p>
 
             {/* CTA buttons */}
-           <motion.div
+           {/* <motion.div
   initial={{ opacity: 0, y: 20 }}
   animate={{ opacity: 1, y: 0 }}
   transition={{ duration: 0.5, delay: 0.3 }}
   className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto"
->
+> */}
   {/* Primary Button */}
-  <Link
+  {/* <Link
     to="/auth"
     className="px-8 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700
                text-white font-semibold shadow-md hover:shadow-lg
@@ -271,10 +272,10 @@ export function HeroSection() {
   >
     Get Started Free
     <ArrowRight className="h-5 w-5 translate-x-0.5" />
-  </Link>
+  </Link> */}
 
   {/* Secondary Button */}
-  <Link
+  {/* <Link
     to="/auth"
     className="px-8 py-3 rounded-full border border-gray-300
                dark:border-gray-700 hover:border-emerald-500
@@ -284,7 +285,46 @@ export function HeroSection() {
   >
     Sign In
   </Link>
+</motion.div> */}
+
+
+{/* CTA buttons */}
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5, delay: 0.3 }}
+  className="
+    flex flex-col sm:flex-row
+    items-center
+    gap-y-4 sm:gap-x-6
+  "
+>
+  {/* Get Started (Animated) */}
+  <Link
+    to="/auth"
+    className="shrink-0 w-[220px] h-[60px] flex justify-center items-center overflow-visible"
+  >
+    <GetStarted />
+  </Link>
+
+  {/* Sign In */}
+  <Link
+    to="/auth"
+    className="
+      shrink-0
+      w-[220px] h-[60px]
+      px-8 py-3 rounded-full
+      border border-gray-300 dark:border-gray-700
+      hover:border-emerald-500
+      text-gray-900 dark:text-white font-semibold
+      transition-all duration-200
+      flex items-center justify-center
+    "
+  >
+    Sign In
+  </Link>
 </motion.div>
+
 
 
             {/* Feature Cards Grid - Desktop only */}
