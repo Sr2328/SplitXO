@@ -14,6 +14,7 @@ import Settlements from "./pages/Settlements";
 import PersonalExpenses from "./pages/PersonalExpenses";
 import NotFound from "./pages/NotFound";
 import AuthCallback from "./pages/AuthCallback";
+import SettingsPage from "./pages/Setting";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/expenses/:expenseId" element={<ExpenseDetail />} />
           <Route path="/settlements" element={<Settlements />} />
           <Route path="/personal-expenses" element={<PersonalExpenses />} />
+          <Route path="/settings" element={<SettingsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

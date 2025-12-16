@@ -13,8 +13,6 @@ import {
   ArrowRightLeft,
   DollarSign,
   IndianRupee,
-  Code,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -204,7 +202,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           </nav>
 
           {/* User section */}
-          <div className="p-4 border-t border-border/50 space-y-4">
+          <div className="p-4 border-t border-border/50">
             <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 mb-3">
               <Avatar />
               <div className="flex-1 min-w-0">
@@ -224,33 +222,6 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>
-
-            {/* Developer Details Section */}
-            <div className="pt-4 border-t border-border/50">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 mb-3">
-                  <Code className="h-4 w-4 text-white" />
-                  <span className="text-xs font-semibold text-white uppercase tracking-wide">
-                    Developer
-                  </span>
-                </div>
-                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-3 border border-emerald-400 hover:border-emerald-300 transition-all shadow-md">
-                  <p className="text-xs font-semibold text-white mb-1">
-                    KOSAC CORP
-                  </p>
-                  <p className="text-xs text-emerald-50 mb-2">
-                    Premium Finance Solutions
-                  </p>
-                  <a
-                    href="#"
-                    className="inline-flex items-center gap-1 text-xs text-white hover:text-emerald-100 font-medium transition-colors"
-                  >
-                    Visit Website
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </aside>
@@ -403,7 +374,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           </nav>
 
           {/* User section */}
-          <div className="p-4 border-t border-border/50 space-y-4">
+          <div className="p-4 border-t border-border/50">
             <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 mb-3">
               <Avatar />
               <div className="flex-1 min-w-0">
@@ -423,33 +394,6 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>
-
-            {/* Developer Details Section - Mobile */}
-            <div className="pt-4 border-t border-border/50">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 mb-3">
-                  <Code className="h-4 w-4 text-white" />
-                  <span className="text-xs font-semibold text-white uppercase tracking-wide">
-                    Developer
-                  </span>
-                </div>
-                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-3 border border-emerald-400 hover:border-emerald-300 transition-all shadow-md">
-                  <p className="text-xs font-semibold text-white mb-1">
-                    KOSAC CORP
-                  </p>
-                  <p className="text-xs text-emerald-50 mb-2">
-                    Premium Finance Solutions
-                  </p>
-                  <a
-                    href="#"
-                    className="inline-flex items-center gap-1 text-xs text-white hover:text-emerald-100 font-medium transition-colors"
-                  >
-                    Visit Website
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </aside>
