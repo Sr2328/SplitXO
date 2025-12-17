@@ -15,6 +15,9 @@ import PersonalExpenses from "./pages/PersonalExpenses";
 import NotFound from "./pages/NotFound";
 import AuthCallback from "./pages/AuthCallback";
 import SettingsPage from "./pages/Setting";
+import ExplorePage from "./pages/ExplorePage";
+import PlaceDetailsPage from './pages/Placedetailspage';
+
 
 const queryClient = new QueryClient();
 
@@ -36,6 +39,8 @@ const App = () => (
           <Route path="/settlements" element={<Settlements />} />
           <Route path="/personal-expenses" element={<PersonalExpenses />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path ="/explore" element={<ExplorePage/>} />
+       <Route path="/explore/:placeId" element={<PlaceDetailsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

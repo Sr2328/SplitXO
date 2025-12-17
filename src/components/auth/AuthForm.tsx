@@ -149,14 +149,15 @@ export function AuthForm() {
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 p-12 flex-col justify-center items-center relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent)]" />
           
-          <div className="relative z-10 text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Simplify management with our dashboard.
-            </h1>
-            <p className="text-emerald-50 text-lg">
-              Simplify your e-commerce management with our user-friendly admin dashboard.
-            </p>
-          </div>
+         <div className="relative z-10 text-center mb-8">
+  <h1 className="text-4xl font-bold text-white mb-4">
+    Simplify expense splitting with SplitXO.
+  </h1>
+  <p className="text-emerald-50 text-lg">
+    Track, split, and manage shared expenses effortlessly with a smart, intuitive dashboard.
+  </p>
+</div>
+
 
           <div className="relative z-10 w-full max-w-md h-96">
             <iframe
@@ -180,26 +181,26 @@ export function AuthForm() {
             transition={{ duration: 0.5 }}
             className="w-full max-w-md"
           >
-            {/* Header */}
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">SO</span>
-                </div>
-                <span className="text-2xl font-bold text-gray-900">SPITXO</span>
-              </div>
-              
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {mode === "signin" && "Welcome Back"}
-                {mode === "signup" && "Create Account"}
-                {mode === "forgot" && "Reset Password"}
-              </h1>
-              <p className="text-gray-500">
-                {mode === "signin" && "Please login to your account"}
-                {mode === "signup" && "Create your account to get started"}
-                {mode === "forgot" && "Enter your email to reset password"}
-              </p>
-            </div>
+{/* Header */}
+<div className="flex justify-center mb-1">
+  <img
+    src="https://i.postimg.cc/3J4WSXkp/Green-Simple-Grocery-Store-Logo-(1).png"
+    alt="SPITXO Logo"
+    className="h-20 w-auto"
+  />
+</div>
+
+
+<h1 className="text-3xl font-bold text-gray-900 mb-2">
+  {mode === "signin" && "Welcome Back"}
+  {mode === "signup" && "Create Account"}
+  {mode === "forgot" && "Reset Password"}
+</h1>
+<p className="text-gray-500">
+  {mode === "signin" && "Please login to your account"}
+  {mode === "signup" && "Create your account to get started"}
+  {mode === "forgot" && "Enter your email to reset password"}
+</p>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -440,7 +441,7 @@ export function AuthForm() {
                 </button>
               )}
             </div>
-          </motion.div>
+            </motion.div>
         </div>
       </div>
     </div>

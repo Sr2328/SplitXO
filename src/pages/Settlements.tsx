@@ -519,7 +519,8 @@ import { SettleModal } from "@/components/balances/SettleModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { 
+import  VerseLoading  from "@/components/ui/Verselaoding";
+import {
   ArrowRightLeft, 
   Receipt, 
   Calendar, 
@@ -563,16 +564,14 @@ export default function Settlements() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+ if (!user || loading) {
+     return (
+       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+         <VerseLoading />
+       </div>
+     );
+   }
+ 
 
   if (!user) return null;
 

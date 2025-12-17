@@ -30,14 +30,14 @@ export default function Auth() {
   return (
     <div className="min-h-screen gradient-hero flex flex-col">
       {/* Header */}
-      <header className="p-6">
+      {/* <header className="p-6">
         <Link to="/" className="inline-flex items-center gap-2 text-foreground hover:opacity-80 transition-opacity">
           <div className="p-2 rounded-xl gradient-primary">
             <Receipt className="h-5 w-5 text-primary-foreground" />
           </div>
           <span className="font-semibold text-lg">SplitWise Pro</span>
         </Link>
-      </header>
+      </header> */}
 
       {/* Auth form */}
       <main className="flex-1 flex items-center justify-center px-4 pb-20">

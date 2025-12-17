@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import VerseLoading from "@/components/ui/Verselaoding";
 import {
   Plus,
   Receipt,
@@ -129,13 +130,14 @@ export default function Expenses() {
 
   const netBalance = totalOwed - totalOwe;
 
-  if (loading || !user) {
+ if (!user || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+        <VerseLoading />
       </div>
     );
   }
+
 
   return (
     <DashboardLayout user={user}>

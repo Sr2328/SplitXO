@@ -13,6 +13,7 @@ import {
   ArrowRightLeft,
   DollarSign,
   IndianRupee,
+  Compass,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/expenses", icon: IndianRupee, label: "Expenses" },
   { href: "/settlements", icon: ArrowRightLeft, label: "Settlements" },
   { href: "/personal-expenses", icon: Wallet, label: "Personal" },
+  { href: "/explore", icon:  Compass, label: "explore" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
 
@@ -261,7 +263,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
 
             {/* Right actions */}
             <div className="flex items-center gap-2">
-              <NotificationBell />
+            <NotificationBell />
 
               {/* Desktop user avatar */}
               <div className="hidden lg:flex items-center gap-2 pl-2">

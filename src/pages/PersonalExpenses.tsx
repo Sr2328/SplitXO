@@ -13,6 +13,7 @@ import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from "da
 import { Plus, Wallet, Calendar, TrendingUp, Trash2, ArrowLeft, IndianRupee, Edit2, BarChart3, Receipt, TrendingDown, IndianRupeeIcon } from "lucide-react";
 import { ExpenseCharts } from "@/components/charts/ExpenseCharts";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import  VerseLoading  from "@/components/ui/Verselaoding";
 
 interface PersonalExpense {
   id: string;
@@ -269,13 +270,14 @@ export default function PersonalExpenses() {
     return Array.from(months).sort().reverse();
   }, [expenses]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
+  if (!user || loading) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+          <VerseLoading />
+        </div>
+      );
+    }
+  
 
   return (
     <DashboardLayout user={user}>
