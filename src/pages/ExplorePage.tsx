@@ -31,7 +31,7 @@ export default function ExplorePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([
-    { id: 'all', name: 'All', slug: 'all', icon: '🔍', color: '#1CC29F', is_active: true, sort_order: 0, created_at: '', updated_at: '', description: null }
+    { id: 'all', name: 'All', slug: 'all', icon: '', color: '#1CC29F', is_active: true, sort_order: 0, created_at: '', updated_at: '', description: null }
   ]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,7 +42,8 @@ export default function ExplorePage() {
 
   // Get user
   useEffect(() => {
-    const getUser = async () => {
+    const getUser = async () =>
+       {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       setLoading(false);
@@ -76,7 +77,7 @@ export default function ExplorePage() {
 
       if (data) {
         setCategories([
-          { id: 'all', name: 'All', slug: 'all', icon: '🔍', color: '#1CC29F', is_active: true, sort_order: 0, created_at: '', updated_at: '', description: null },
+          { id: 'all', name: 'All', slug: 'all', icon: '', color: '#1CC29F', is_active: true, sort_order: 0, created_at: '', updated_at: '', description: null },
           ...data
         ]);
       }
@@ -273,139 +274,164 @@ export default function ExplorePage() {
 
   return (
     <DashboardLayout user={user}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        {/* Hero Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden bg-gradient-to-r from-[#1CC29F] to-[#15A886] px-6 py-12 md:px-12 rounded-b-[2rem] shadow-2xl"
-        >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-          
-          <div className="relative z-10 max-w-7xl mx-auto">
-            <div className="flex items-center gap-3 mb-3">
-              <Compass className="w-8 h-8 text-white" />
-              <h1 className="text-4xl md:text-5xl font-bold text-white">
-                Explore
-              </h1>
-            </div>
-            <p className="text-white/90 text-lg mb-8 max-w-2xl">
-              Discover amazing places, split expenses with friends, and make memories
-            </p>
-
-            {/* Search Bar */}
-            <div className="bg-white rounded-2xl shadow-xl p-4 max-w-4xl">
-              <div className="flex flex-col md:flex-row gap-3">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    type="text"
-                    placeholder="Search restaurants, movies, destinations..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#1CC29F]"
-                  />
-                </div>
-
-                <div className="flex-1 relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    type="text"
-                    placeholder="Enter location..."
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#1CC29F]"
-                  />
-                </div>
-
-                <Button
-                  onClick={handleLocationDetect}
-                  className="bg-[#1CC29F] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#15A886]"
-                >
-                  <Navigation className="w-5 h-5 mr-2" />
-                  <span className="hidden md:inline">Use Location</span>
-                </Button>
-              </div>
-            </div>
+      {/* Hero Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700  px-6 py-12 md:px-12 rounded-2xl shadow-2xl"
+      >
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+        
+        <div className="relative z-10 max-w-7xl mx-auto">
+          <div className="flex items-center gap-3 mb-3">
+            <Compass className="w-8 h-8 text-white" />
+            <h1 className="text-4xl md:text-5xl font-bold text-white">
+              Explore
+            </h1>
           </div>
-        </motion.div>
+          <p className="text-white/90 text-lg mb-8 max-w-2xl">
+            Discover amazing places, split expenses with friends, and make memories
+          </p>
 
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-6 py-8 md:px-12">
-          {/* Categories */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Categories</h2>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-              {categories.map((category, index) => (
-                <motion.button
-                  key={category.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => setSelectedCategory(category.slug)}
-                  className={`
-                    relative p-4 rounded-2xl transition-all duration-300
-                    ${selectedCategory === category.slug
-                      ? 'bg-gradient-to-br from-[#1CC29F] to-[#15A886] text-white shadow-xl scale-105'
-                      : 'bg-white text-gray-700 hover:shadow-lg hover:-translate-y-1'
-                    }
-                  `}
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <span className="text-3xl">{category.icon}</span>
-                    <span className="text-xs font-semibold text-center">
-                      {category.name}
-                    </span>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-          {/* Results */}
-          <div className="flex items-center gap-2 mb-6">
-            <TrendingUp className="w-5 h-5 text-[#1CC29F]" />
-            <h2 className="text-2xl font-bold text-gray-800">
-              {selectedCategory === 'all' ? 'All Places' : categories.find(c => c.slug === selectedCategory)?.name}
-            </h2>
-            <span className="bg-gray-200 px-3 py-1 rounded-full text-sm text-gray-600">
-              {places.length} found
-            </span>
-          </div>
-
-          {/* Places Grid */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl p-4 animate-pulse">
-                  <div className="w-full h-48 bg-gray-200 rounded-xl mb-4" />
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-                  <div className="h-4 bg-gray-200 rounded w-1/2" />
-                </div>
-              ))}
-            </div>
-          ) : places.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">No places found</h3>
-              <p className="text-gray-600">Try adjusting your search or filters</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {places.map((place, index) => (
-                <PlaceCard
-                  key={place.id}
-                  place={place}
-                  index={index}
-                  onBookmark={toggleBookmark}
-                  onClick={handlePlaceClick}
+          {/* Search Bar */}
+          <div className="bg-white rounded-2xl shadow-xl p-4 max-w-4xl">
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search restaurants, movies, destinations..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#1CC29F]"
                 />
-              ))}
+              </div>
+
+              <div className="flex-1 relative">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Enter location..."
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#1CC29F]"
+                />
+              </div>
+
+              <Button
+                onClick={handleLocationDetect}
+                className="bg-[#1CC29F] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#15A886]"
+              >
+                <Navigation className="w-5 h-5 mr-2" />
+                <span className="hidden md:inline">Use Location</span>
+              </Button>
             </div>
-          )}
+          </div>
         </div>
+      </motion.div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8 md:px-12">
+        {/* Categories */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Categories
+          </h2>
+
+          <div
+            className="
+              flex gap-4 overflow-x-auto no-scrollbar
+              py-2 px-1
+              scroll-smooth
+            "
+          >
+            {categories.map((category, index) => (
+              <motion.button
+                key={category.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                onClick={() => setSelectedCategory(category.slug)}
+                className={`
+                  flex-shrink-0
+                  w-24 h-24
+                  rounded-full
+                  p-4
+                  cursor-pointer
+                  transition-all duration-300
+                  ${
+                    selectedCategory === category.slug
+                      ? "bg-white shadow-xl scale-105"
+                      : "bg-gray-100 shadow-md hover:shadow-lg hover:-translate-y-1"
+                  }
+                `}
+              >
+                <div className="flex flex-col items-center justify-center h-full gap-2">
+                  {category.icon && category.icon.startsWith('http') ? (
+                    <img
+                      src={category.icon}
+                      alt={category.name}
+                      className="w-8 h-8 object-contain"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://hmmpneinsvtrgvivduhk.supabase.co/storage/v1/object/public/category-icons/magnifying-glass.png';
+                      }}
+                    />
+                  ) : (
+                    <span className="text-3xl">
+                      {category.icon || ''}
+                    </span>
+                  )}
+                  <span className="text-xs font-semibold text-gray-700 text-center">
+                    {category.name}
+                  </span>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
+        {/* Results */}
+        <div className="flex items-center gap-2 mb-6">
+          <TrendingUp className="w-5 h-5 text-[#1CC29F]" />
+          <h2 className="text-2xl font-bold text-gray-800">
+            {selectedCategory === 'all' ? 'All Places' : categories.find(c => c.slug === selectedCategory)?.name}
+          </h2>
+          <span className="bg-gray-200 px-3 py-1 rounded-full text-sm text-gray-600">
+            {places.length} found
+          </span>
+        </div>
+
+        {/* Places Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl p-4 animate-pulse">
+                <div className="w-full h-48 bg-gray-200 rounded-xl mb-4" />
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                <div className="h-4 bg-gray-200 rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : places.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">No places found</h3>
+            <p className="text-gray-600">Try adjusting your search or filters</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {places.map((place, index) => (
+              <PlaceCard
+                key={place.id}
+                place={place}
+                index={index}
+                onBookmark={toggleBookmark}
+                onClick={handlePlaceClick}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
