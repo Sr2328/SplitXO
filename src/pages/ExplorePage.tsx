@@ -342,7 +342,7 @@ export default function ExplorePage() {
       </motion.div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 md:py-8 md:px-12">
+      <div className="max-w-7xl mx-auto ">
         
         {/* Categories Scroll */}
         <div className="mb-8 sm:mb-10">
