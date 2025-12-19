@@ -280,66 +280,91 @@ export default function ExplorePage() {
   return (
     <DashboardLayout user={user}>
       {/* Hero Section */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 px-4 py-8 sm:px-6 md:px-12 md:py-12 rounded-2xl shadow-2xl mx-4 sm:mx-6 md:mx-0"
-      >
-        <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-32 sm:h-32 md:w-48 md:h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-        
-        <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-            <Compass className="w-6 h-6 sm:w-8 sm:h-8 text-white flex-shrink-0" />
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
-              Explore
-            </h1>
-          </div>
-          <p className="text-white/90 text-sm sm:text-base md:text-lg mb-6 sm:mb-8 max-w-2xl">
-            Discover amazing places, split expenses with friends, and make memories
-          </p>
+      <motion.div
+  initial={{ opacity: 0, y: -20 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="
+    relative overflow-hidden
+    bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700
+   
+  
+    rounded-xl shadow-xl
+    mx-2 sm:mx-4 md:mx-0
+  "
+>
+  {/* Decorative circles */}
+  <div className="absolute top-0 right-0 w-28 h-28 sm:w-40 sm:h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+  <div className="absolute bottom-0 left-0 w-20 h-20 sm:w-28 sm:h-28 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
 
-          {/* Search Bar */}
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-3 sm:p-4">
-            <div className="flex flex-col gap-2 sm:gap-3">
-              {/* Search Input */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
-                <Input
-                  type="text"
-                  placeholder="Search places..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 sm:pl-12 pr-3 sm:pr-4 py-2 sm:py-3 rounded-lg sm:rounded-xl border-2 border-gray-200 focus:border-[#1CC29F] text-sm sm:text-base"
-                />
-              </div>
+  <div className="relative z-10 max-w-6xl mx-auto">
+    {/* Heading */}
+    <div className="flex items-center gap-2 mb-2">
+      <Compass className="w-6 h-6 text-white" />
+      <h1 className="text-3xl sm:text-4xl font-bold text-white">
+        Explore
+      </h1>
+    </div>
 
-              {/* Location and Button Row */}
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <div className="flex-1 relative">
-                  <MapPin className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
-                  <Input
-                    type="text"
-                    placeholder="Location..."
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="w-full pl-9 sm:pl-12 pr-3 sm:pr-4 py-2 sm:py-3 rounded-lg sm:rounded-xl border-2 border-gray-200 focus:border-[#1CC29F] text-sm sm:text-base"
-                  />
-                </div>
+    <p className="text-white/90 text-sm sm:text-base mb-5 max-w-xl">
+      Discover amazing places, split expenses with friends, and make memories
+    </p>
 
-                <Button
-                  onClick={handleLocationDetect}
-                  className="bg-[#1CC29F] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-semibold hover:bg-[#15A886] transition-colors flex items-center justify-center gap-2 text-sm sm:text-base whitespace-nowrap"
-                >
-                  <Navigation className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                  <span className="hidden sm:inline">Use Location</span>
-                  <span className="sm:hidden">Location</span>
-                </Button>
-              </div>
-            </div>
-          </div>
+    {/* Search Bar */}
+    <div className="bg-white rounded-xl shadow-lg p-2.5 sm:p-3">
+      <div className="flex flex-col gap-2">
+        {/* Search Input */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search places..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="
+              w-full pl-9 pr-3 py-2
+              rounded-lg border-2 border-gray-200
+              focus:border-[#1CC29F]
+              text-sm
+            "
+          />
         </div>
-      </motion.div>
+
+        {/* Location + Button */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Location..."
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="
+                w-full pl-9 pr-3 py-2
+                rounded-lg border-2 border-gray-200
+                focus:border-[#1CC29F]
+                text-sm
+              "
+            />
+          </div>
+
+          <Button
+            onClick={handleLocationDetect}
+            className="
+              bg-[#1CC29F] hover:bg-[#15A886]
+              text-white px-4 py-2
+              rounded-lg font-semibold
+              flex items-center justify-center gap-2
+              text-sm whitespace-nowrap
+            "
+          >
+            <Navigation className="w-4 h-4" />
+            Location
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</motion.div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto ">
