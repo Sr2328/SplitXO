@@ -287,7 +287,7 @@ export default function ExplorePage() {
     relative overflow-hidden
     bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700
    
-  
+    sm:px-4 sm:py-8
     rounded-xl shadow-xl
     mx-2 sm:mx-4 md:mx-0
   "
