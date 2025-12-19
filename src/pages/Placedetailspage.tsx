@@ -191,7 +191,7 @@ export default function PlaceDetailsPage() {
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen  flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#1CC29F] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Loading place details...</p>
@@ -203,7 +203,7 @@ export default function PlaceDetailsPage() {
   if (!place) {
     return (
       <DashboardLayout user={user}>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen  flex items-center justify-center">
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-800 mb-2">Place not found</p>
             <Button onClick={() => navigate('/explore')} variant="link">
@@ -217,9 +217,9 @@ export default function PlaceDetailsPage() {
 
   return (
     <DashboardLayout user={user}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen ">
         {/* Mobile Hero Section */}
-        <div className="relative h-60 sm:h-80 md:h-96 lg:h-[500px] bg-gray-900 rounded-b-3xl overflow-hidden">
+        <div className="relative h-60 sm:h-80 md:h-96 lg:h-[500px] bg-gray-900 rounded-3xl overflow-hidden">
           <img
             src={place.image_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200'}
             alt={place.name}
@@ -328,8 +328,8 @@ export default function PlaceDetailsPage() {
         </div>
 
         {/* Main Content Card */}
-        <div className="px-3 sm:px-4 md:px-6 py-4 sm:py-6">
-          <div className="max-w-full mx-auto">
+        
+          <div className="max-w-full mx-auto mt-4">
             {/* Header Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -611,7 +611,7 @@ export default function PlaceDetailsPage() {
             </motion.div>
           </div>
         </div>
-      </div>
+     
     </DashboardLayout>
   );
 }
