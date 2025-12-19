@@ -14,6 +14,7 @@ import {
   DollarSign,
   IndianRupee,
   Compass,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,7 +40,7 @@ const navItems = [
   { href: "/expenses", icon: IndianRupee, label: "Expenses" },
   { href: "/settlements", icon: ArrowRightLeft, label: "Settlements" },
   { href: "/personal-expenses", icon: Wallet, label: "Personal" },
-  { href: "/explore", icon:  Compass, label: "explore" },
+  { href: "/explore", icon: Compass, label: "explore" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
 
@@ -130,7 +131,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
     ) : (
       <div
         className={cn(
-          "rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold shadow-sm",
+          "rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold shadow-sm text-sm",
           className
         )}
       >
@@ -140,7 +141,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen bg-white">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <motion.div
@@ -153,135 +154,16 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
       )}
 
       {/* Desktop Sidebar */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-border/50 transform transition-transform duration-300 lg:translate-x-0 shadow-sm hidden lg:block"
-        )}
-      >
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center gap-3 p-6 border-b border-border/50">
-            <img
-              src="https://i.postimg.cc/wv9dQrMw/Gemini-Generated-Image-8a0kyv8a0kyv8a0k-(2).png"
-              alt="icon"
-              className="h-12 w-12 object-cover"
-            />
-            <div>
-              <span className="font-bold text-xl text-foreground block leading-none">
-                SplitXo
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Split Smart, Move Fast.
-              </span>
-            </div>
-          </div>
+      <aside className="fixed inset-y-0 left-0 z-50 w-20 bg-white border-r border-gray-100 hidden lg:flex flex-col items-center py-6 gap-8">
+        {/* Logo */}
+       <img
+  src="https://i.postimg.cc/9fmhcxnh/Green-Simple-Grocery-Store-Logo-(1).png"   // or .png with transparent background
+  alt="Logo"
+  className="h-12 w-12 object-contain flex-shrink-0"
+/>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group",
-                    isActive
-                      ? "bg-teal-500 text-white shadow-md"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  <item.icon
-                    className={cn("h-5 w-5", isActive && "text-white")}
-                  />
-                  <span className="flex-1">{item.label}</span>
-                  {isActive && (
-                    <div className="h-2 w-2 rounded-full bg-white"></div>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* User section */}
-          <div className="p-4 border-t border-border/50">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 mb-3">
-              <Avatar />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">
-                  {userName}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {user.email}
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-rose-600 hover:bg-rose-50 rounded-xl"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <div className="lg:pl-72 pb-20 lg:pb-0">
-        {/* Top bar - Desktop & Mobile */}
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-border/50">
-          <div className="flex items-center justify-between h-24 px-4 md:px-6">
-            {/* Mobile menu button */}
-            <button
-              className="lg:hidden p-2 text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted transition-colors"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-
-            {/* Mobile Logo */}
-            <Link to="/dashboard" className="lg:hidden flex items-center gap-2">
-              <img
-                src="https://i.postimg.cc/wv9dQrMw/Gemini-Generated-Image-8a0kyv8a0kyv8a0k-(2).png"
-                alt="icon"
-                className="h-8 w-8 object-cover"
-              />
-              <span className="font-bold text-lg">SplitXo</span>
-            </Link>
-
-            {/* Lottie Animation - Desktop & Mobile */}
-            <motion.div className="flex">
-              <iframe
-                src="https://lottie.host/embed/5827f91a-f8dd-4e99-865a-fa1c3c726145/LdV4goNDtF.lottie"
-                style={{ border: "none", height: "64px", width: "64px" }}
-              ></iframe>
-            </motion.div>
-
-            <div className="flex-1 lg:flex-none" />
-
-            {/* Right actions */}
-            <div className="flex items-center gap-2">
-            <NotificationBell />
-
-              {/* Desktop user avatar */}
-              <div className="hidden lg:flex items-center gap-2 pl-2">
-                <Avatar className="h-9 w-9" />
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Page content */}
-        <main className="p-4 md:p-6 lg:p-8 min-h-[calc(100vh-4rem)]">
-          {children}
-        </main>
-      </div>
-
-      {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-border/50 shadow-lg">
-        <div className="grid grid-cols-5 h-16">
+        {/* Navigation */}
+        <nav className="flex flex-col items-center gap-4 flex-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href;
             return (
@@ -289,58 +171,122 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors",
-                  isActive ? "text-teal-600" : "text-muted-foreground"
+                  "p-2.5 rounded-lg transition-all duration-200 flex items-center justify-center",
+                  isActive
+                    ? "bg-gray-100 text-teal-600"
+                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
                 )}
+                title={item.label}
               >
-                <div
-                  className={cn(
-                    "p-2 rounded-xl transition-all",
-                    isActive && "bg-teal-50"
-                  )}
-                >
-                  <item.icon
-                    className={cn("h-5 w-5", isActive && "text-teal-600")}
-                  />
-                </div>
-                <span className="text-[10px]">{item.label}</span>
+                <item.icon className="h-5 w-5" />
               </Link>
             );
           })}
+        </nav>
+
+        {/* Bottom Actions */}
+        <div className="flex flex-col items-center gap-4 border-t border-gray-200 pt-4">
+          <button className="p-2.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all">
+            <Bell className="h-5 w-5" />
+          </button>
+          <button className="p-2.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all">
+            <Settings className="h-5 w-5" />
+          </button>
+          <Avatar className="h-9 w-9 cursor-pointer" />
         </div>
-      </nav>
+      </aside>
+
+      {/* Main content */}
+      <div className="lg:pl-20">
+        {/* Top Header */}
+        <header className="sticky top-0 z-30 bg-white border-b border-gray-100 h-16">
+          <div className="flex items-center justify-between h-full px-4 md:px-6 lg:px-8">
+            {/* Left side */}
+            <div className="flex items-center gap-4">
+              {/* Mobile menu button */}
+              <button
+                className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+
+              {/* Logo for mobile */}
+              <div className="lg:hidden flex items-center justify-center h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
+                <span className="text-white font-bold">S</span>
+              </div>
+
+              {/* App name */}
+              <h1 className="hidden md:block text-lg font-semibold text-gray-900">
+                SplitXo
+              </h1>
+            </div>
+
+            {/* Center - Navigation tabs */}
+            <nav className="hidden md:flex items-center gap-6">
+              <button className="text-sm font-medium text-gray-900 hover:text-gray-600 transition-colors">
+                Dashboard
+              </button>
+              <button className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
+                Reports
+              </button>
+              <button className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
+                Documents
+              </button>
+              <button className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
+                History
+              </button>
+              <button className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
+                Contacts
+              </button>
+            </nav>
+
+            {/* Right side */}
+            <div className="flex items-center gap-3 md:gap-4">
+              <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <Search className="h-5 w-5" />
+              </button>
+              <NotificationBell />
+              <div className="hidden lg:block">
+                <Avatar className="h-9 w-9 cursor-pointer" />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="p-4 md:p-6 lg:p-8">
+          {children}
+        </main>
+      </div>
 
       {/* Mobile Sidebar Overlay */}
       <aside
         className={cn(
-          "lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-border/50 transform transition-transform duration-300 shadow-xl",
+          "lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-100 transform transition-transform duration-300 shadow-xl",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between p-6 border-b border-border/50">
+          <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <Link
               to="/dashboard"
               className="flex items-center gap-3"
               onClick={() => setSidebarOpen(false)}
             >
-              <img
-                src="https://i.postimg.cc/wv9dQrMw/Gemini-Generated-Image-8a0kyv8a0kyv8a0k-(2).png"
-                alt="icon"
-                className="h-12 w-12 object-cover"
-              />
+              <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
+                <span className="text-white font-bold">S</span>
+              </div>
               <div>
-                <span className="font-bold text-xl text-foreground block leading-none">
+                <span className="font-bold text-lg text-gray-900 block">
                   SplitXo
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  Split Smart, Move Fast.
-                </span>
+                <span className="text-xs text-gray-500">Split Smart, Move Fast.</span>
               </div>
             </Link>
             <button
-              className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-muted"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
               onClick={() => setSidebarOpen(false)}
             >
               <X className="h-5 w-5" />
@@ -356,19 +302,17 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
                   key={item.href}
                   to={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-teal-500 text-white shadow-md"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-teal-50 text-teal-600"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   )}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <item.icon
-                    className={cn("h-5 w-5", isActive && "text-white")}
-                  />
+                  <item.icon className="h-5 w-5" />
                   <span className="flex-1">{item.label}</span>
                   {isActive && (
-                    <div className="h-2 w-2 rounded-full bg-white"></div>
+                    <div className="h-2 w-2 rounded-full bg-teal-600"></div>
                   )}
                 </Link>
               );
@@ -376,21 +320,21 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           </nav>
 
           {/* User section */}
-          <div className="p-4 border-t border-border/50">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 mb-3">
+          <div className="p-4 border-t border-gray-100">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 mb-3">
               <Avatar />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">
+                <p className="text-sm font-semibold text-gray-900 truncate">
                   {userName}
                 </p>
-                <p className="text-xs text-muted-foreground truncate">
+                <p className="text-xs text-gray-500 truncate">
                   {user.email}
                 </p>
               </div>
             </div>
             <Button
               variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-rose-600 hover:bg-rose-50 rounded-xl"
+              className="w-full justify-start text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg"
               onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4 mr-2" />

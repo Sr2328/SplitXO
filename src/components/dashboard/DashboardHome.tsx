@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { User } from "@supabase/supabase-js";
 import {
@@ -9,36 +9,45 @@ import {
   Receipt,
   Plus,
   Calendar,
-  DollarSign,
   IndianRupee,
-  IndianRupeeIcon,
-  ArrowRight,
+  Wallet,
+  Send,
+  CreditCard,
+  Eye,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useGroups, GroupMember } from "@/hooks/useGroups";
+import { useGroups } from "@/hooks/useGroups";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useBalances, Balance } from "@/hooks/useBalances";
 import { CreateGroupModal } from "@/components/groups/CreateGroupModal";
-import { GroupCard } from "@/components/groups/GroupCard";
-import { ManageMembersModal } from "@/components/groups/ManageMembersModal";
 import { AddExpenseModal } from "@/components/expenses/AddExpenseModal";
-import { ExpenseCard } from "@/components/expenses/ExpenseCard";
-import { BalanceCard } from "@/components/balances/BalanceCard";
+import { ManageMembersModal } from "@/components/groups/ManageMembersModal";
 import { SettleModal } from "@/components/balances/SettleModal";
+import { GroupCard } from "@/components/groups/GroupCard";
+import { ExpenseCard } from "@/components/expenses/ExpenseCard";
 import { Group } from "@/hooks/useGroups";
-import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardHomeProps {
   user: User;
 }
 
 export function DashboardHome({ user }: DashboardHomeProps) {
-  const userName = user.user_metadata?.full_name?.split(" ")[0] || "there";
-  
-  const { groups, createGroup, updateGroup, deleteGroup, getGroupMembers, addMemberByEmail, removeMember } = useGroups();
+  const userName = user.user_metadata?.full_name?.split(" ")[0] || "User";
+  const userEmail = user.email || "";
+  const initials = user.user_metadata?.full_name
+    ?.split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase() || "U";
+
+  const { groups, createGroup, deleteGroup, getGroupMembers, addMemberByEmail, removeMember } =
+    useGroups();
   const { expenses, createExpense, deleteExpense } = useExpenses();
-  const { balances, totalOwed, totalOwe, createSettlement, calculateBalances } = useBalances();
+  const { balances, totalOwed, totalOwe, createSettlement, calculateBalances } =
+    useBalances();
 
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
@@ -46,12 +55,51 @@ export function DashboardHome({ user }: DashboardHomeProps) {
   const [settleOpen, setSettleOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [selectedBalance, setSelectedBalance] = useState<Balance | null>(null);
-  const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
-  const navigate = useNavigate();
+  const [groupMembers, setGroupMembers] = useState([]);
+  const [monthlyExpenses, setMonthlyExpenses] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchMonthlyExpenses();
+  }, [expenses]);
+
+  const fetchMonthlyExpenses = async () => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const monthlyData = Array(6).fill(0);
+
+    expenses.forEach((expense) => {
+      const expenseDate = new Date(expense.expense_date);
+      const monthDiff = (currentYear - expenseDate.getFullYear()) * 12 + 
+                        (currentMonth - expenseDate.getMonth());
+      
+      if (monthDiff >= 0 && monthDiff < 6) {
+        monthlyData[5 - monthDiff] += expense.amount;
+      }
+    });
+
+    setMonthlyExpenses(monthlyData);
+  };
 
   const handleManageMembers = (group: Group) => {
     setSelectedGroup(group);
     setManageMembersOpen(true);
+  };
+
+  const handleSettle = (balance: Balance) => {
+    setSelectedBalance(balance);
+    setSettleOpen(true);
+  };
+
+  const handleSettleSubmit = async (
+    groupId: string,
+    paidTo: string,
+    amount: number,
+    notes?: string
+  ) => {
+    await createSettlement(groupId, paidTo, amount, notes);
+    await calculateBalances();
   };
 
   const refreshMembers = async () => {
@@ -61,324 +109,559 @@ export function DashboardHome({ user }: DashboardHomeProps) {
     }
   };
 
-  const handleSettle = (balance: Balance) => {
-    setSelectedBalance(balance);
-    setSettleOpen(true);
-  };
-
-  const handleSettleSubmit = async (groupId: string, paidTo: string, amount: number, notes?: string) => {
-    await createSettlement(groupId, paidTo, amount, notes);
-    await calculateBalances();
-  };
-
   const netBalance = totalOwed - totalOwe;
+  const maxExpense = monthlyExpenses.length > 0 ? Math.max(...monthlyExpenses) : 1;
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto">
-      {/* Enhanced Header with gradient card */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }} 
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 p-7 md:p-9 text-white shadow-2xl"
+        className="flex items-start justify-between"
       >
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <p className="text-emerald-50 text-xs md:text-sm mb-2 font-medium tracking-wide">WELCOME BACK</p>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{userName}</h1>
-            </div>
-            <div className="h-14 w-14 md:h-16 md:w-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-lg">
-              <IndianRupee className="h-7 w-7 md:h-9 md:w-9" />
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            <p className="text-emerald-50/80 text-[10px] md:text-xs font-semibold tracking-widest">BALANCE AMOUNT</p>
-            <p className="text-4xl md:text-5xl font-bold tracking-tight">₹{Math.abs(netBalance).toFixed(2)}</p>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm">
-              <div className={cn(
-                "w-2 h-2 rounded-full",
-                netBalance >= 0 ? "bg-green-400" : "bg-amber-400"
-              )} />
-              <p className="text-emerald-50 text-xs font-medium">
-                {netBalance >= 0 ? "You're owed overall" : "You owe overall"}
-              </p>
-            </div>
-          </div>
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+            Welcome Back, <span className="text-teal-600">{userName}</span>
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">{userEmail}</p>
         </div>
-        
-        {/* Enhanced decorative circles */}
-        <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full -mr-36 -mt-36 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-56 h-56 bg-white/10 rounded-full -ml-28 -mb-28 blur-3xl" />
-        <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-right"
+        >
+          <p className="text-xs text-gray-500 mb-1">
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "short",
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })}
+          </p>
+          <p className="text-sm text-gray-600">{new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>
+        </motion.div>
       </motion.div>
 
-      {/* Enhanced Quick stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <StatCard 
-          title="You Owe" 
-          value={`₹${totalOwe.toFixed(2)}`} 
-          subtitle={`${balances.filter(b => b.amount < 0).length} people`} 
-          icon={ArrowUpRight} 
-          trend="negative" 
-          delay={0} 
-        />
-        <StatCard 
-          title="You're Owed" 
-          value={`₹${totalOwed.toFixed(2)}`} 
-          subtitle={`${balances.filter(b => b.amount > 0).length} people`} 
-          icon={ArrowDownRight} 
-          trend="positive" 
-          delay={0.1} 
-        />
-        <StatCard 
-          title="Active Groups" 
-          value={String(groups.length)} 
-          subtitle={`Group${groups.length !== 1 ? "s" : ""}`} 
-          icon={Users} 
-          trend="neutral" 
-          delay={0.2} 
-        />
-        <StatCard 
-          title="Expenses" 
-          value={String(expenses.length)} 
-          subtitle="This month" 
-          icon={Calendar} 
-          trend="neutral" 
-          delay={0.3} 
-        />
-      </div>
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Payment Goal Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 p-8 text-white"
+          >
+            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16" />
 
-      {/* Enhanced Balances Section */}
-      {balances.length > 0 && (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.5, delay: 0.35 }} 
-          className="bg-card rounded-[1rem] border border-border/50 shadow-lg p-6 md:p-7"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-foreground">Your Balances</h2>
-              <p className="text-xs text-muted-foreground mt-1">Settle up with friends</p>
+            <div className="relative z-10 flex items-start justify-between mb-8">
+              <div>
+                <p className="text-emerald-50/70 text-xs font-semibold tracking-widest mb-1">
+                  BALANCE STATUS
+                </p>
+                <h2 className="text-2xl font-bold">Net Balance</h2>
+              </div>
+              <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Wallet className="h-6 w-6" />
+              </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-xs font-medium hover:bg-muted/50 rounded-xl">View All</Button>
-          </div>
-          <div className="space-y-3">
-            {balances.slice(0, 5).map((balance, i) => (
-              <BalanceCard 
-                key={balance.userId} 
-                balance={balance} 
-                onSettle={handleSettle} 
-                delay={i * 0.05} 
-              />
-            ))}
-          </div>
-        </motion.div>
-      )}
 
-      {/* Enhanced Main content grid */}
-    <>
-  {/* Enhanced Recent Expenses */}
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }} 
-    animate={{ opacity: 1, y: 0 }} 
-    transition={{ duration: 0.5, delay: 0.4 }} 
-    className="bg-card rounded-2xl border border-border/50 shadow-lg p-6 mb-6"
-  >
-    <div className="flex items-center justify-between mb-6">
-      <div>
-        <h2 className="text-xl md:text-2xl font-bold text-foreground">Recent Expenses</h2>
-        <p className="text-xs text-muted-foreground mt-1">Last transactions</p>
-      </div>
-      <Button 
-        size="sm" 
-        variant="ghost"
-        onClick={() => setAddExpenseOpen(true)}
-        className="h-10 w-10 p-0 rounded-xl hover:bg-muted/50 transition-all hover:scale-105"
-      >
-        <Plus className="h-5 w-5" />
-      </Button>
-    </div>
-    
-    {expenses.length === 0 ? (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="p-4 rounded-2xl bg-muted/50 mb-4">
-          <IndianRupeeIcon className="h-10 w-10 text-muted-foreground" />
-        </div>
-        <h3 className="font-semibold text-foreground text-lg mb-2">No expenses yet</h3>
-        <p className="text-sm text-muted-foreground mb-6 max-w-[250px]">Start tracking by adding your first expense</p>
-        <Button size="sm" onClick={() => setAddExpenseOpen(true)} className="rounded-xl shadow-sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Expense
-        </Button>
-      </div>
-    ) : (
-      <div className="space-y-3">
-        {expenses.slice(0, 5).map((expense, i) => (
-          <ExpenseCard 
-            key={expense.id} 
-            expense={expense} 
-            currentUserId={user.id} 
-            onDelete={(id) => deleteExpense(id)} 
-            delay={i * 0.05} 
-          />
-        ))}
-      </div>
-    )}
-  </motion.div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-emerald-50/60 text-xs font-semibold tracking-widest mb-2">
+                  AMOUNT
+                </p>
+                <p className="text-5xl font-bold tracking-tight">
+                  ₹{Math.abs(netBalance).toFixed(2)}
+                </p>
+              </div>
 
-  {/* Enhanced Your Groups */}
-<motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.45 }}
-      className="bg-card rounded-2xl border border-border/50 shadow-lg p-4 sm:p-6"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5 sm:mb-6">
-        <div>
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">Your Groups</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Manage your groups</p>
-        </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setCreateGroupOpen(true)}
-          className="h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-xl hover:bg-muted/50 transition-all hover:scale-105"
-        >
-          <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-        </Button>
-      </div>
+              <div className="flex items-center gap-2">
+                <div
+                  className={cn(
+                    "w-2 h-2 rounded-full",
+                    netBalance >= 0 ? "bg-green-300" : "bg-yellow-300"
+                  )}
+                />
+                <p className="text-emerald-50/80 text-sm font-medium">
+                  {netBalance >= 0 ? "You're owed overall" : "You owe overall"}
+                </p>
+              </div>
+            </div>
 
-      {/* No Groups Placeholder */}
-      {groups.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
-          <div className="p-3 sm:p-4 rounded-2xl bg-muted/50 mb-3 sm:mb-4">
-            <Users className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
-          </div>
-          <h3 className="font-semibold text-foreground text-base sm:text-lg mb-2">No groups yet</h3>
-          <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6 max-w-[250px]">
-            Create a group to start splitting expenses
-          </p>
-          <Button size="sm" onClick={() => setCreateGroupOpen(true)} className="rounded-xl shadow-sm text-xs sm:text-sm">
-            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
-            Create Group
-          </Button>
-        </div>
-      ) : (
-        <>
-          {/* Groups Grid: 1 col mobile, 2 col tablet, 4 col desktop */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-            {groups.slice(0, 4).map((group, i) => (
-              <GroupCard
-                key={group.id}
-                group={group}
-                onEdit={() => {}}
-                onDelete={(g) => deleteGroup(g.id)}
-                onManageMembers={handleManageMembers}
-                onClick={() => {}}
-                delay={i * 0.05}
-              />
-            ))}
-          </div>
-
-          {/* View All Button - Only show if more than 4 groups */}
-          {groups.length > 4 && (
-            <div className="flex justify-center pt-2 sm:pt-4">
+            <div className="mt-8 flex gap-3">
               <Button
-                variant="outline"
                 size="sm"
-                onClick={() => navigate("/groups")}
-                className="rounded-xl gap-2 text-xs sm:text-sm origin-center transform transition-transform duration-200 ease-out hover:scale-x-[1.05]"
+                className="bg-white text-teal-600 hover:bg-emerald-50 rounded-lg"
+                onClick={() => setAddExpenseOpen(true)}
               >
-                View All Groups
-                <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <Plus className="h-4 w-4 mr-2" />
+                Add Expense
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="border border-white/30 text-white hover:bg-white/10 rounded-lg"
+                onClick={() => {
+                  const positiveBalance = balances.find((b) => b.amount > 0);
+                  if (positiveBalance) {
+                    handleSettle(positiveBalance);
+                  }
+                }}
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Settle
               </Button>
             </div>
-          )}
-        </>
-      )}
-    </motion.div>
- 
+          </motion.div>
 
-</>
+          {/* Stats Row */}
+          <div className="grid grid-cols-3 gap-4">
+            <StatCard
+              title="You Owe"
+              value={`₹${totalOwe.toFixed(2)}`}
+              subtitle={`${balances.filter((b) => b.amount < 0).length} people`}
+              icon={ArrowUpRight}
+              color="rose"
+              delay={0.2}
+            />
+            <StatCard
+              title="You're Owed"
+              value={`₹${totalOwed.toFixed(2)}`}
+              subtitle={`${balances.filter((b) => b.amount > 0).length} people`}
+              icon={ArrowDownRight}
+              color="emerald"
+              delay={0.3}
+            />
+            <StatCard
+              title="Expenses"
+              value={String(expenses.length)}
+              subtitle="Total added"
+              icon={Receipt}
+              color="blue"
+              delay={0.4}
+            />
+          </div>
+
+          {/* Engagement Rate / Monthly Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Monthly Expenses</h3>
+                <p className="text-xs text-gray-500 mt-1">Last 6 months trend</p>
+              </div>
+              <Button variant="ghost" size="sm" className="text-xs">
+                <Eye className="h-4 w-4 mr-1" />
+                View
+              </Button>
+            </div>
+
+            <div className="flex items-end justify-between gap-2 h-40">
+              {monthlyExpenses.map((amount, i) => {
+                const height = maxExpense > 0 ? (amount / maxExpense) * 100 : 0;
+                const months = ["6M", "5M", "4M", "3M", "2M", "1M"];
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                    <div
+                      className={cn(
+                        "w-full rounded-t-lg transition-all hover:opacity-80 cursor-pointer",
+                        i === monthlyExpenses.length - 1
+                          ? "bg-teal-500"
+                          : "bg-gray-200"
+                      )}
+                      style={{ height: `${Math.max(height, 10)}%` }}
+                    />
+                    <span className="text-xs text-gray-500 font-medium">
+                      {months[i]}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          {/* Recent Expenses */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">
+                  Recent Expenses
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">Last transactions</p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setAddExpenseOpen(true)}
+                className="h-10 w-10 p-0 rounded-lg hover:bg-gray-100"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            </div>
+
+            {expenses.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="p-3 rounded-xl bg-gray-100 mb-3">
+                  <Receipt className="h-8 w-8 text-gray-400" />
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-1">
+                  No expenses yet
+                </h4>
+                <p className="text-xs text-gray-500 mb-4">
+                  Start tracking by adding your first expense
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => setAddExpenseOpen(true)}
+                  className="rounded-lg"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Expense
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {expenses.slice(0, 5).map((expense, i) => (
+                  <ExpenseCard
+                    key={expense.id}
+                    expense={expense}
+                    currentUserId={user.id}
+                    onDelete={(id) => deleteExpense(id)}
+                    delay={i * 0.05}
+                  />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="space-y-6">
+          {/* Payment Methods */}
+         <motion.div
+  initial={{ opacity: 0, x: 20 }}
+  animate={{ opacity: 1, x: 0 }}
+  transition={{ delay: 0.2 }}
+  className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow"
+>
+  {/* Header */}
+  <div className="mb-4">
+    <h3 className="font-bold text-gray-900">Your Wallet</h3>
+  </div>
+
+  {/* Wallet Card */}
+  <div className="space-y-4">
+    <div className="p-4 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl text-white shadow-md">
+      <div className="flex items-start justify-between mb-8">
+        <CreditCard className="h-5 w-5 opacity-60" />
+        <span className="text-xs font-semibold opacity-70">SPLITXO</span>
+      </div>
+
+      <p className="text-sm opacity-70 mb-3">Net Balance</p>
+      <p className="text-2xl font-bold">
+        ₹{Math.abs(netBalance).toFixed(2)}
+      </p>
+    </div>
+
+    {/* Action Buttons BELOW */}
+    <div className="flex items-center justify-between gap-2">
+      {/* Add Expense */}
+      <Button
+        size="icon"
+        variant="outline"
+        onClick={() => setAddExpenseOpen(true)}
+        className="h-10 w-10 rounded-lg flex-1"
+      >
+        <Receipt className="h-4 w-4" />
+      </Button>
+
+      {/* Add Group */}
+      <Button
+        size="icon"
+        variant="outline"
+        onClick={() => setCreateGroupOpen(true)}
+        className="h-10 w-10 rounded-lg flex-1"
+      >
+        <Users className="h-4 w-4" />
+      </Button>
+
+      {/* Settle Payment */}
+      <Button
+        size="icon"
+        variant="outline"
+       onClick={() => setSettleOpen(true)}
+        className="h-10 w-10 rounded-lg flex-1"
+      >
+        <Send className="h-4 w-4" />
+      </Button>
+    </div>
+  </div>
+</motion.div>
+
+
+          {/* Your Balances */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900">Balances</h3>
+              <span className="text-xs text-gray-500">
+                {balances.length} {balances.length === 1 ? "person" : "people"}
+              </span>
+            </div>
+
+            {balances.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-xs text-gray-500">No balances yet</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {balances.slice(0, 4).map((balance, i) => (
+                  <motion.button
+                    key={balance.userId}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    onClick={() => handleSettle(balance)}
+                    className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {balance.userName}
+                      </p>
+                      <p
+                        className={cn(
+                          "text-xs font-medium",
+                          balance.amount > 0
+                            ? "text-emerald-600"
+                            : "text-rose-600"
+                        )}
+                      >
+                        {balance.amount > 0 ? "Owed" : "Owes"} ₹
+                        {Math.abs(balance.amount).toFixed(2)}
+                      </p>
+                    </div>
+                    <ArrowDownRight
+                      className={cn(
+                        "h-4 w-4",
+                        balance.amount > 0
+                          ? "text-emerald-600"
+                          : "text-rose-600"
+                      )}
+                    />
+                  </motion.button>
+                ))}
+              </div>
+            )}
+          </motion.div>
+
+          {/* Mandatory Payments - Groups */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow"
+          >
+            {/* Amount of credit section */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                {/* <Users className="h-6 w-6 text-gray-600" /> */}
+                <p className="text-lg font-bold text-gray-900">Groups Overview</p>
+              </div>
+              <p className="text-xs text-gray-500 mb-3">Total amount owed with Groups</p>
+              <div className="flex items-center justify-between">
+                <p className="text-4xl font-bold text-gray-900">
+                  ₹{totalOwed.toFixed(2)}
+                </p>
+                <div className="bg-teal-50 border border-teal-200 rounded-full px-3 py-1">
+                  <span className="text-xs font-semibold text-teal-600">
+                    {balances.filter((b) => b.amount < 0).length}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-gray-100 my-6" />
+
+            {/* Mandatory Payments section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-bold text-gray-900 text-sm">All Groups</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Manage Groups</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCreateGroupOpen(true)}
+                  className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {groups.length === 0 ? (
+                <div className="text-center py-6">
+                  <Users className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-xs text-gray-500 mb-3">No groups yet</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-lg w-full"
+                    onClick={() => setCreateGroupOpen(true)}
+                  >
+                    Create Group
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {groups.slice(0, 4).map((group, idx) => (
+                      <motion.div
+                        key={`${group.id}-avatar`}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="h-10 w-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+                        title={group.name}
+                        onClick={() => handleManageMembers(group)}
+                      >
+                        {group.name.substring(0, 2).toUpperCase()}
+                      </motion.div>
+                    ))}
+                    {groups.length > 4 && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.4 }}
+                        className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold border-2 border-white shadow-md"
+                      >
+                        +{groups.length - 4}
+                      </motion.div>
+                    )}
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      // Navigate to groups page
+                      window.location.href = "/groups";
+                    }}
+                    className="h-10 w-10 rounded-full bg-teal-500 hover:bg-teal-600 flex items-center justify-center text-white shadow-md hover:shadow-lg transition-all"
+                  >
+                    <ArrowUpRight className="h-5 w-5" />
+                  </motion.button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </div>
 
       {/* Modals */}
-      <CreateGroupModal 
-        isOpen={createGroupOpen} 
-        onClose={() => setCreateGroupOpen(false)} 
-        onSubmit={createGroup} 
+      <CreateGroupModal
+        isOpen={createGroupOpen}
+        onClose={() => setCreateGroupOpen(false)}
+        onSubmit={createGroup}
       />
-      <AddExpenseModal 
-        isOpen={addExpenseOpen} 
-        onClose={() => setAddExpenseOpen(false)} 
-        groups={groups} 
-        onSubmit={createExpense} 
-        getGroupMembers={getGroupMembers} 
-        currentUserId={user.id} 
-        onCreateGroup={() => { 
-          setAddExpenseOpen(false); 
-          setCreateGroupOpen(true); 
-        }} 
+      <AddExpenseModal
+        isOpen={addExpenseOpen}
+        onClose={() => setAddExpenseOpen(false)}
+        groups={groups}
+        onSubmit={createExpense}
+        getGroupMembers={getGroupMembers}
+        currentUserId={user.id}
+        onCreateGroup={() => {
+          setAddExpenseOpen(false);
+          setCreateGroupOpen(true);
+        }}
       />
-      <ManageMembersModal 
-        isOpen={manageMembersOpen} 
-        onClose={() => setManageMembersOpen(false)} 
-        group={selectedGroup} 
-        members={groupMembers} 
-        onAddMember={(email) => addMemberByEmail(selectedGroup!.id, email)} 
-        onRemoveMember={(userId) => removeMember(selectedGroup!.id, userId)} 
-        onRefresh={refreshMembers} 
-        currentUserId={user.id} 
+      <ManageMembersModal
+        isOpen={manageMembersOpen}
+        onClose={() => setManageMembersOpen(false)}
+        group={selectedGroup}
+        members={groupMembers}
+        onAddMember={(email) => addMemberByEmail(selectedGroup!.id, email)}
+        onRemoveMember={(userId) => removeMember(selectedGroup!.id, userId)}
+        onRefresh={refreshMembers}
+        currentUserId={user.id}
       />
-      <SettleModal 
-        isOpen={settleOpen} 
-        onClose={() => setSettleOpen(false)} 
-        balance={selectedBalance} 
-        groups={groups} 
-        onSubmit={handleSettleSubmit} 
+      <SettleModal
+        isOpen={settleOpen}
+        onClose={() => setSettleOpen(false)}
+        balance={selectedBalance}
+        groups={groups}
+        onSubmit={handleSettleSubmit}
       />
     </div>
   );
 }
 
-function StatCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon: Icon, 
-  trend, 
-  delay 
-}: { 
-  title: string; 
-  value: string; 
-  subtitle: string; 
-  icon: React.ElementType; 
-  trend: "positive" | "negative" | "neutral"; 
-  delay: number; 
+function StatCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  color,
+  delay,
+}: {
+  title: string;
+  value: string;
+  subtitle: string;
+  icon: React.ElementType;
+  color: "rose" | "emerald" | "blue";
+  delay: number;
 }) {
+  const colorStyles = {
+    rose: "bg-white border-gray-100",
+    emerald: "bg-white border-gray-100",
+    blue: "bg-white border-gray-100",
+  };
+
+  const iconStyles = {
+    rose: "bg-rose-100 text-rose-600",
+    emerald: "bg-emerald-100 text-emerald-600",
+    blue: "bg-blue-100 text-blue-600",
+  };
+
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      transition={{ duration: 0.5, delay }} 
-      className="bg-card rounded-2xl border border-border/50 shadow-md p-5 hover:shadow-lg transition-all duration-300 group hover:scale-[1.02]"
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className={cn(
+        "rounded-2xl border p-5 shadow-sm hover:shadow-lg transition-all hover:scale-[1.02]",
+        colorStyles[color]
+      )}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className={cn(
-          "p-2.5 rounded-xl transition-all duration-300",
-          trend === "positive" && "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100",
-          trend === "negative" && "bg-rose-50 text-rose-600 group-hover:bg-rose-100",
-          trend === "neutral" && "bg-blue-50 text-blue-600 group-hover:bg-blue-100"
-        )}>
-          <Icon className="h-4 w-4 md:h-5 md:w-5" />
-        </div>
+      <div className={cn("p-2.5 rounded-lg w-fit mb-3", iconStyles[color])}>
+        <Icon className="h-4 w-4" />
       </div>
-      <p className="text-[10px] md:text-xs font-semibold text-muted-foreground mb-2 tracking-wide uppercase">{title}</p>
-      <p className="text-2xl md:text-3xl font-bold text-foreground mb-1 tracking-tight">{value}</p>
-      <p className="text-xs text-muted-foreground font-medium">{subtitle}</p>
+      <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">
+        {title}
+      </p>
+      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-xs text-gray-600 mt-1">{subtitle}</p>
     </motion.div>
   );
 }
