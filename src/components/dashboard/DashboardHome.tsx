@@ -115,23 +115,23 @@ export function DashboardHome({ user }: DashboardHomeProps) {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header Section */}
-      <motion.div
+       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-start justify-between"
+        className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
       >
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 break-words">
             Welcome Back, <span className="text-teal-600">{userName}</span>
           </h1>
-          <p className="text-gray-500 text-sm mt-1">{userEmail}</p>
+          <p className="text-gray-500 text-xs md:text-sm mt-1 break-all">{userEmail}</p>
         </div>
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-right"
+          className="text-right flex-shrink-0"
         >
           <p className="text-xs text-gray-500 mb-1">
             {new Date().toLocaleDateString("en-US", {
@@ -141,7 +141,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
               day: "numeric",
             })}
           </p>
-          <p className="text-sm text-gray-600">{new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>
+          <p className="text-xs md:text-sm text-gray-600">{new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>
         </motion.div>
       </motion.div>
 
@@ -221,10 +221,10 @@ export function DashboardHome({ user }: DashboardHomeProps) {
           </motion.div>
 
           {/* Stats Row */}
-          <div className="grid grid-cols-3 gap-4">
+         <div className="grid grid-cols-3 gap-4">
             <StatCard
               title="You Owe"
-              value={`₹${totalOwe.toFixed(2)}`}
+              value={totalOwe.toFixed(2)}
               subtitle={`${balances.filter((b) => b.amount < 0).length} people`}
               icon={ArrowUpRight}
               color="rose"
@@ -232,7 +232,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
             />
             <StatCard
               title="You're Owed"
-              value={`₹${totalOwed.toFixed(2)}`}
+              value={totalOwed.toFixed(2)}
               subtitle={`${balances.filter((b) => b.amount > 0).length} people`}
               icon={ArrowDownRight}
               color="emerald"
@@ -247,6 +247,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
               delay={0.4}
             />
           </div>
+
 
           {/* Engagement Rate / Monthly Chart */}
           <motion.div
@@ -290,6 +291,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
             </div>
           </motion.div>
 
+         
           {/* Recent Expenses */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -336,7 +338,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
               </div>
             ) : (
               <div className="space-y-3">
-                {expenses.slice(0, 5).map((expense, i) => (
+                {expenses.slice(0, 4).map((expense, i) => (
                   <ExpenseCard
                     key={expense.id}
                     expense={expense}
@@ -346,6 +348,24 @@ export function DashboardHome({ user }: DashboardHomeProps) {
                   />
                 ))}
               </div>
+            )}
+
+            {expenses.length > 4 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="flex justify-center pt-4 mt-2 border-t border-gray-100"
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg text-xs font-medium gap-1 hover:bg-gray-50"
+                >
+                  View All Expenses
+                  <ArrowDownRight className="h-3 w-3" />
+                </Button>
+              </motion.div>
             )}
           </motion.div>
         </div>
@@ -436,39 +456,61 @@ export function DashboardHome({ user }: DashboardHomeProps) {
             ) : (
               <div className="space-y-3">
                 {balances.slice(0, 4).map((balance, i) => (
-                  <motion.button
+                  <motion.div
                     key={balance.userId}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    onClick={() => handleSettle(balance)}
-                    className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg transition-colors",
+                      balance.amount < 0
+                        ? "bg-rose-50 border border-rose-100"
+                        : "bg-teal-50 border border-teal-100"
+                    )}
                   >
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-gray-900">
                         {balance.userName}
                       </p>
-                      <p
-                        className={cn(
-                          "text-xs font-medium",
-                          balance.amount > 0
-                            ? "text-emerald-600"
-                            : "text-rose-600"
-                        )}
-                      >
-                        {balance.amount > 0 ? "Owed" : "Owes"} ₹
-                        {Math.abs(balance.amount).toFixed(2)}
-                      </p>
+                      <div className="flex items-center gap-0.5 mt-1">
+                        <p
+                          className={cn(
+                            "text-xs font-medium",
+                            balance.amount > 0
+                              ? "text-teal-600"
+                              : "text-rose-600"
+                          )}
+                        >
+                          {balance.amount > 0 ? "Owed" : "Owes"}
+                        </p>
+                        <IndianRupee className="h-3 w-3" />
+                        <p
+                          className={cn(
+                            "text-xs font-semibold",
+                            balance.amount > 0
+                              ? "text-teal-600"
+                              : "text-rose-600"
+                          )}
+                        >
+                          {Math.abs(balance.amount).toFixed(2)}
+                        </p>
+                      </div>
                     </div>
-                    <ArrowDownRight
-                      className={cn(
-                        "h-4 w-4",
-                        balance.amount > 0
-                          ? "text-emerald-600"
-                          : "text-rose-600"
-                      )}
-                    />
-                  </motion.button>
+                    {balance.amount < 0 && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleSettle(balance)}
+                        className="rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-xs"
+                      >
+                        Pay
+                      </Button>
+                    )}
+                    {balance.amount > 0 && (
+                      <ArrowDownRight
+                        className="h-4 w-4 text-teal-600"
+                      />
+                    )}
+                  </motion.div>
                 ))}
               </div>
             )}
