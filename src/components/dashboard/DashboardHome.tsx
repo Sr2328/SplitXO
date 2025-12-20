@@ -109,7 +109,6 @@ export function DashboardHome({ user }: DashboardHomeProps) {
     }
   };
 
-  const netBalance = totalOwed - totalOwe;
   const maxExpense = monthlyExpenses.length > 0 ? Math.max(...monthlyExpenses) : 1;
 
   return (
@@ -162,9 +161,9 @@ export function DashboardHome({ user }: DashboardHomeProps) {
             <div className="relative z-10 flex items-start justify-between mb-8">
               <div>
                 <p className="text-emerald-50/70 text-xs font-semibold tracking-widest mb-1">
-                  BALANCE STATUS
+                  YOUR NET BALANCE
                 </p>
-                <h2 className="text-2xl font-bold">Net Balance</h2>
+                <h2 className="text-2xl font-bold">Balance Overview</h2>
               </div>
               <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
                 <Wallet className="h-6 w-6" />
@@ -174,10 +173,10 @@ export function DashboardHome({ user }: DashboardHomeProps) {
             <div className="space-y-4">
               <div>
                 <p className="text-emerald-50/60 text-xs font-semibold tracking-widest mb-2">
-                  AMOUNT
+                  NET BALANCE
                 </p>
                 <p className="text-5xl font-bold tracking-tight">
-                  ₹{Math.abs(netBalance).toFixed(2)}
+                  ₹{(totalOwed - totalOwe).toFixed(2)}
                 </p>
               </div>
 
@@ -185,11 +184,11 @@ export function DashboardHome({ user }: DashboardHomeProps) {
                 <div
                   className={cn(
                     "w-2 h-2 rounded-full",
-                    netBalance >= 0 ? "bg-green-300" : "bg-yellow-300"
+                    (totalOwed - totalOwe) >= 0 ? "bg-green-300" : "bg-yellow-300"
                   )}
                 />
                 <p className="text-emerald-50/80 text-sm font-medium">
-                  {netBalance >= 0 ? "You're owed overall" : "You owe overall"}
+                  {(totalOwed - totalOwe) >= 0 ? "You're owed overall" : "You owe overall"}
                 </p>
               </div>
             </div>
@@ -221,31 +220,25 @@ export function DashboardHome({ user }: DashboardHomeProps) {
           </motion.div>
 
           {/* Stats Row */}
-         <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <StatCard
-              title="You Owe"
-              value={totalOwe.toFixed(2)}
-              subtitle={`${balances.filter((b) => b.amount < 0).length} people`}
-              icon={ArrowUpRight}
-              color="rose"
-              delay={0.2}
-            />
-            <StatCard
-              title="You're Owed"
-              value={totalOwed.toFixed(2)}
-              subtitle={`${balances.filter((b) => b.amount > 0).length} people`}
-              icon={ArrowDownRight}
-              color="emerald"
-              delay={0.3}
-            />
-            <StatCard
-              title="Expenses"
-              value={String(expenses.length)}
-              subtitle="Total added"
-              icon={Receipt}
-              color="blue"
-              delay={0.4}
-            />
+  title="You Owe"
+  value={`₹${totalOwe.toFixed(2)}`}
+  subtitle={`${balances.filter((b) => b.amount < 0).length} people`}
+  icon={ArrowUpRight}
+  iconBg="bg-gradient-to-br from-emerald-500 to-emerald-600"
+  delay={0.2}
+/>
+
+<StatCard
+  title="Expenses"
+  value={String(expenses.length)}
+  subtitle="Total added"
+  icon={IndianRupee}
+  iconBg="bg-gradient-to-br from-emerald-500 to-emerald-600"
+  delay={0.4}
+/>
+
           </div>
 
 
@@ -372,66 +365,54 @@ export function DashboardHome({ user }: DashboardHomeProps) {
 
         {/* Right Sidebar */}
         <div className="space-y-6">
-          {/* Payment Methods */}
-         <motion.div
-  initial={{ opacity: 0, x: 20 }}
-  animate={{ opacity: 1, x: 0 }}
-  transition={{ delay: 0.2 }}
-  className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow"
->
-  {/* Header */}
-  <div className="mb-4">
-    <h3 className="font-bold text-gray-900">Your Wallet</h3>
-  </div>
+          {/* Your Wallet */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow"
+          >
+            {/* Header */}
+            <div className="mb-6">
+              <h3 className="font-bold text-gray-900 text-lg">Your Wallet</h3>
+              <p className="text-xs text-gray-500 mt-1">Amount owed to you</p>
+            </div>
 
-  {/* Wallet Card */}
-  <div className="space-y-4">
-    <div className="p-4 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl text-white shadow-md">
-      <div className="flex items-start justify-between mb-8">
-        <CreditCard className="h-5 w-5 opacity-60" />
-        <span className="text-xs font-semibold opacity-70">SPLITXO</span>
-      </div>
+            {/* Wallet Card */}
+            <div className="p-5 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl text-white shadow-md mb-5">
+              <div className="flex items-start justify-between mb-6">
+                <CreditCard className="h-5 w-5 opacity-60" />
+                <span className="text-xs font-semibold opacity-70">SPLITXO</span>
+              </div>
 
-      <p className="text-sm opacity-70 mb-3">Net Balance</p>
-      <p className="text-2xl font-bold">
-        ₹{Math.abs(netBalance).toFixed(2)}
-      </p>
-    </div>
+              <p className="text-sm opacity-70 mb-2">Receivable</p>
+              <p className="text-3xl font-bold">
+                ₹{totalOwed.toFixed(2)}
+              </p>
+              <p className="text-xs opacity-60 mt-3">
+                {balances.filter((b) => b.amount > 0).length} people owe you
+              </p>
+            </div>
 
-    {/* Action Buttons BELOW */}
-    <div className="flex items-center justify-between gap-2">
-      {/* Add Expense */}
-      <Button
-        size="icon"
-        variant="outline"
-        onClick={() => setAddExpenseOpen(true)}
-        className="h-10 w-10 rounded-lg flex-1"
-      >
-        <Receipt className="h-4 w-4" />
-      </Button>
-
-      {/* Add Group */}
-      <Button
-        size="icon"
-        variant="outline"
-        onClick={() => setCreateGroupOpen(true)}
-        className="h-10 w-10 rounded-lg flex-1"
-      >
-        <Users className="h-4 w-4" />
-      </Button>
-
-      {/* Settle Payment */}
-      <Button
-        size="icon"
-        variant="outline"
-       onClick={() => setSettleOpen(true)}
-        className="h-10 w-10 rounded-lg flex-1"
-      >
-        <Send className="h-4 w-4" />
-      </Button>
-    </div>
-  </div>
-</motion.div>
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              <Button
+                onClick={() => setAddExpenseOpen(true)}
+                className="w-full rounded-lg bg-teal-500 hover:bg-teal-600 text-white text-sm"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Expense
+              </Button>
+              <Button
+                onClick={() => setCreateGroupOpen(true)}
+                variant="outline"
+                className="w-full rounded-lg text-sm"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Create Group
+              </Button>
+            </div>
+          </motion.div>
 
 
           {/* Your Balances */}
@@ -526,17 +507,16 @@ export function DashboardHome({ user }: DashboardHomeProps) {
             {/* Amount of credit section */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
-                {/* <Users className="h-6 w-6 text-gray-600" /> */}
                 <p className="text-lg font-bold text-gray-900">Groups Overview</p>
               </div>
-              <p className="text-xs text-gray-500 mb-3">Total amount owed with Groups</p>
+              <p className="text-xs text-gray-500 mb-3">Total amount owed to you</p>
               <div className="flex items-center justify-between">
                 <p className="text-4xl font-bold text-gray-900">
                   ₹{totalOwed.toFixed(2)}
                 </p>
                 <div className="bg-teal-50 border border-teal-200 rounded-full px-3 py-1">
                   <span className="text-xs font-semibold text-teal-600">
-                    {balances.filter((b) => b.amount < 0).length}
+                    {balances.filter((b) => b.amount > 0).length}
                   </span>
                 </div>
               </div>
@@ -665,13 +645,15 @@ function StatCard({
   subtitle,
   icon: Icon,
   color,
+  iconBg,
   delay,
 }: {
   title: string;
   value: string;
   subtitle: string;
   icon: React.ElementType;
-  color: "rose" | "emerald" | "blue";
+  color?: "rose" | "emerald" | "blue";
+  iconBg?: string; // 👈 NEW (gradient or any class)
   delay: number;
 }) {
   const colorStyles = {
@@ -693,21 +675,29 @@ function StatCard({
       transition={{ delay }}
       className={cn(
         "rounded-2xl border p-5 shadow-sm hover:shadow-lg transition-all hover:scale-[1.02]",
-        colorStyles[color]
+        color ? colorStyles[color] : "bg-white border-gray-100"
       )}
     >
-      <div className={cn("p-2.5 rounded-lg w-fit mb-3", iconStyles[color])}>
+      {/* Icon */}
+      <div
+        className={cn(
+          "p-2.5 rounded-lg w-fit mb-3 text-white",
+          iconBg ?? iconStyles[color ?? "emerald"]
+        )}
+      >
         <Icon className="h-4 w-4" />
       </div>
+
       <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">
         {title}
       </p>
+
       <p className="text-2xl font-bold text-gray-900">{value}</p>
+
       <p className="text-xs text-gray-600 mt-1">{subtitle}</p>
     </motion.div>
   );
 }
-
 
 
 
