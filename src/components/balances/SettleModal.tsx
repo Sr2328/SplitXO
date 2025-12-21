@@ -135,8 +135,17 @@ export function SettleModal({ isOpen, onClose, balance, groups, onSubmit }: Sett
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block">
                         Paying To
                       </label>
-                      <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
-                        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-md">
+                      <div className="flex items-center gap-3 p-4 rounded-xl
+  bg-gradient-to-r from-[#ef473a]/10 to-[#cb2d3e]/10
+  border-2 border-[#ef473a]/40
+">
+  <div className="h-12 w-12 rounded-full
+    bg-gradient-to-r from-[#ef473a] to-[#cb2d3e]
+    flex items-center justify-center
+    text-white font-bold text-lg
+    flex-shrink-0 shadow-md
+  ">
+
                           {balance.userName.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">

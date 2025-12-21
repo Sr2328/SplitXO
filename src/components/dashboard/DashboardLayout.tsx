@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
-import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Users,
@@ -11,7 +10,6 @@ import {
   Bell,
   Wallet,
   ArrowRightLeft,
-  DollarSign,
   IndianRupee,
   Compass,
   Search,
@@ -46,6 +44,7 @@ const navItems = [
 
 export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -141,13 +140,10 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <div
           className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -156,11 +152,9 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-50 w-20 bg-white border-r border-gray-100 hidden lg:flex flex-col items-center py-6 gap-8">
         {/* Logo */}
-       <img
-  src="https://i.postimg.cc/9fmhcxnh/Green-Simple-Grocery-Store-Logo-(1).png"   // or .png with transparent background
-  alt="Logo"
-  className="h-12 w-12 object-contain flex-shrink-0"
-/>
+        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+          <span className="text-white font-bold text-xl">S</span>
+        </div>
 
         {/* Navigation */}
         <nav className="flex flex-col items-center gap-4 flex-1">
@@ -189,17 +183,47 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           <button className="p-2.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all">
             <Bell className="h-5 w-5" />
           </button>
-          <button className="p-2.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all">
-            <Settings className="h-5 w-5" />
-          </button>
-          <Avatar className="h-9 w-9 cursor-pointer" />
+          <div className="relative">
+            <button
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="p-0 rounded-lg transition-all hover:opacity-80"
+            >
+              <Avatar className="h-9 w-9" />
+            </button>
+
+            {profileOpen && (
+              <div className="absolute bottom-full right-0 mb-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 p-4 z-50">
+                <div className="flex items-center gap-3 mb-4">
+                  <Avatar className="h-12 w-12" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {userName}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    handleSignOut();
+                    setProfileOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </aside>
 
       {/* Main content */}
       <div className="lg:pl-20">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 bg-white border-b border-gray-100 h-16">
+        <header className="sticky top-0 z-30 bg-white border-b border-gray-100 h-16 shadow-sm">
           <div className="flex items-center justify-between h-full px-4 md:px-6 lg:px-8">
             {/* Left side */}
             <div className="flex items-center gap-4">
@@ -211,35 +235,16 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
                 <Menu className="h-5 w-5" />
               </button>
 
-              {/* Logo for mobile */}
+              {/* Mobile Logo */}
               <div className="lg:hidden flex items-center justify-center h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
                 <span className="text-white font-bold">S</span>
               </div>
 
-              {/* App name */}
-              <h1 className="hidden md:block text-lg font-semibold text-gray-900">
+              {/* Desktop App name */}
+              <h1 className="hidden lg:block text-lg font-bold text-gray-900">
                 SplitXo
               </h1>
             </div>
-
-            {/* Center - Navigation tabs */}
-            <nav className="hidden md:flex items-center gap-6">
-              <button className="text-sm font-medium text-gray-900 hover:text-gray-600 transition-colors">
-                Dashboard
-              </button>
-              <button className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
-                Reports
-              </button>
-              <button className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
-                Documents
-              </button>
-              <button className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
-                History
-              </button>
-              <button className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
-                Contacts
-              </button>
-            </nav>
 
             {/* Right side */}
             <div className="flex items-center gap-3 md:gap-4">
@@ -247,8 +252,39 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
                 <Search className="h-5 w-5" />
               </button>
               <NotificationBell />
-              <div className="hidden lg:block">
-                <Avatar className="h-9 w-9 cursor-pointer" />
+              <div className="hidden lg:block relative">
+                <button
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="p-0 rounded-lg transition-all hover:opacity-80"
+                >
+                  <Avatar className="h-9 w-9" />
+                </button>
+
+                {profileOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 p-4 z-50">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Avatar className="h-12 w-12" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {userName}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        handleSignOut();
+                        setProfileOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -260,7 +296,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         </main>
       </div>
 
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Sidebar */}
       <aside
         className={cn(
           "lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-100 transform transition-transform duration-300 shadow-xl",
@@ -268,23 +304,19 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Logo */}
+          {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <Link
-              to="/dashboard"
-              className="flex items-center gap-3"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-bold">S</span>
               </div>
               <div>
                 <span className="font-bold text-lg text-gray-900 block">
                   SplitXo
                 </span>
-                <span className="text-xs text-gray-500">Split Smart, Move Fast.</span>
+                <span className="text-xs text-gray-500">Split Smart</span>
               </div>
-            </Link>
+            </div>
             <button
               className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
               onClick={() => setSidebarOpen(false)}
