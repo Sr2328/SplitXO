@@ -12,7 +12,9 @@ import {
   ArrowRightLeft,
   IndianRupee,
   Compass,
-  Search,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,21 +40,24 @@ const navItems = [
   { href: "/expenses", icon: IndianRupee, label: "Expenses" },
   { href: "/settlements", icon: ArrowRightLeft, label: "Settlements" },
   { href: "/personal-expenses", icon: Wallet, label: "Personal" },
-  { href: "/explore", icon: Compass, label: "explore" },
+  { href: "/explore", icon: Compass, label: "Explore" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
 
+const mobileNavItems = navItems.slice(0, 5);
+
 export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Fetch user profile on mount
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        setLoading(true);
         const { data, error } = await supabase
           .from("profiles")
           .select("avatar_url, full_name, email")
@@ -63,12 +68,13 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         setProfile(data);
       } catch (error) {
         console.error("Error fetching profile:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProfile();
 
-    // Subscribe to profile changes
     const channel = supabase
       .channel("profile-changes")
       .on(
@@ -93,22 +99,27 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   }, [user.id]);
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error("Failed to sign out");
-    } else {
-      navigate("/");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.error("Failed to sign out");
+      } else {
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Sign out error:", error);
+      toast.error("An error occurred during sign out");
     }
   };
 
-  // Get user name from profile or fallback to email
   const userName =
     profile?.full_name ||
     user.user_metadata?.full_name ||
     user.email?.split("@")[0] ||
     "User";
 
-  // Get initials
+  const userEmail = profile?.email || user.email || "";
+
   const nameParts = userName.trim().split(" ");
   let userInitial = "";
   if (nameParts.length === 1) {
@@ -119,18 +130,17 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
       nameParts[nameParts.length - 1].charAt(0).toUpperCase();
   }
 
-  // Avatar component
   const Avatar = ({ className = "h-10 w-10" }: { className?: string }) => {
     return profile?.avatar_url ? (
       <img
         src={profile.avatar_url}
         alt={userName}
-        className={cn("rounded-full object-cover shadow-sm", className)}
+        className={cn("rounded-full object-cover", className)}
       />
     ) : (
       <div
         className={cn(
-          "rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold shadow-sm text-sm",
+          "rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-semibold",
           className
         )}
       >
@@ -139,242 +149,328 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
     );
   };
 
+  const Logo = ({ className = "h-8 w-8" }: { className?: string }) => {
+    const logoUrl = import.meta.env.VITE_APP_LOGO_URL || 
+      "https://i.postimg.cc/MH3PZrq3/Green-Simple-Grocery-Store-Logo-(1).png";
+    
+    return (
+      <img
+        src={logoUrl}
+        alt="SplitXO Logo"
+        className={cn("object-contain", className)}
+      />
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-50 w-20 bg-white border-r border-gray-100 hidden lg:flex flex-col items-center py-6 gap-8">
-        {/* Logo */}
-        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-          <span className="text-white font-bold text-xl">S</span>
+      <aside 
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 hidden lg:flex flex-col transition-all duration-300 ease-in-out shadow-sm",
+          sidebarCollapsed ? "w-20" : "w-64"
+        )}
+      >
+        {/* Logo Section */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 flex-shrink-0">
+          {!sidebarCollapsed ? (
+            <>
+              <Link to="/dashboard" className="flex items-center gap-3">
+                <Logo className="h-8 w-8" />
+                <div>
+                  <span className="font-bold text-lg text-gray-900 block leading-tight">
+                    SplitXO
+                  </span>
+                  <span className="text-[10px] text-gray-500 leading-tight">Split Smart</span>
+                </div>
+              </Link>
+              <button
+                onClick={() => setSidebarCollapsed(true)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                title="Collapse sidebar"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            </>
+          ) : (
+            <Link to="/dashboard" className="flex items-center justify-center w-full">
+              <Logo className="h-8 w-8" />
+            </Link>
+          )}
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-col items-center gap-4 flex-1">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hide">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href;
+            const Icon = item.icon;
             return (
               <Link
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "p-2.5 rounded-lg transition-all duration-200 flex items-center justify-center",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative group",
                   isActive
-                    ? "bg-gray-100 text-teal-600"
-                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                    ? "bg-gradient-to-r from-emerald-50 to-teal-50 text-teal-700"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 )}
-                title={item.label}
+                title={sidebarCollapsed ? item.label : undefined}
               >
-                <item.icon className="h-5 w-5" />
+                <Icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-teal-600")} />
+                {!sidebarCollapsed && (
+                  <span className="flex-1">{item.label}</span>
+                )}
+                
+                {sidebarCollapsed && (
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
+                    {item.label}
+                  </div>
+                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Bottom Actions */}
-        <div className="flex flex-col items-center gap-4 border-t border-gray-200 pt-4">
-          <button className="p-2.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all">
-            <Bell className="h-5 w-5" />
-          </button>
-          <div className="relative">
-            <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="p-0 rounded-lg transition-all hover:opacity-80"
-            >
-              <Avatar className="h-9 w-9" />
-            </button>
-
-            {profileOpen && (
-              <div className="absolute bottom-full right-0 mb-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 p-4 z-50">
-                <div className="flex items-center gap-3 mb-4">
-                  <Avatar className="h-12 w-12" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
-                      {userName}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {user.email}
-                    </p>
-                  </div>
+        {/* Bottom Section */}
+        <div className="p-3 border-t border-gray-100 space-y-3 flex-shrink-0 bg-white">
+          {/* Upgrade Card */}
+          {!sidebarCollapsed && (
+            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-5 w-5" />
+                  <span className="font-bold text-sm">Upgrade Now</span>
                 </div>
-                <button
-                  onClick={() => {
-                    handleSignOut();
-                    setProfileOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
+                <p className="text-xs text-emerald-50 mb-3">
+                  Unlock premium features and get unlimited access
+                </p>
+                <button className="w-full bg-white text-teal-600 rounded-lg py-2 px-3 text-xs font-semibold hover:bg-emerald-50 transition-colors">
+                  Upgrade Plan
                 </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {sidebarCollapsed && (
+            <button
+              onClick={() => setSidebarCollapsed(false)}
+              className="w-full p-2.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center"
+              title="Expand sidebar"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          )}
+          
+          {/* User Profile */}
+          {!sidebarCollapsed ? (
+            <div className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+              <Avatar className="h-9 w-9" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {userName}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {userEmail}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <Avatar className="h-9 w-9" />
+            </div>
+          )}
+          
+          {/* Sign Out Button */}
+          {!sidebarCollapsed && (
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg h-9"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          )}
         </div>
       </aside>
 
-      {/* Main content */}
-      <div className="lg:pl-20">
+      {/* Main content wrapper */}
+      <div className={cn(
+        "h-screen flex flex-col transition-all duration-300 ease-in-out",
+        sidebarCollapsed ? "lg:pl-20" : "lg:pl-64"
+      )}>
         {/* Top Header */}
-        <header className="sticky top-0 z-30 bg-white border-b border-gray-100 h-16 shadow-sm">
+        <header className="h-16 bg-white shadow-sm flex-shrink-0 z-30 border-b border-gray-100">
           <div className="flex items-center justify-between h-full px-4 md:px-6 lg:px-8">
-            {/* Left side */}
-            <div className="flex items-center gap-4">
-              {/* Mobile menu button */}
+            <div className="flex items-center gap-3">
               <button
                 className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                 onClick={() => setSidebarOpen(true)}
               >
                 <Menu className="h-5 w-5" />
               </button>
-
-              {/* Mobile Logo */}
-              <div className="lg:hidden flex items-center justify-center h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
-                <span className="text-white font-bold">S</span>
-              </div>
-
-              {/* Desktop App name */}
-              <h1 className="hidden lg:block text-lg font-bold text-gray-900">
-                SplitXo
-              </h1>
+              
+              <Link to="/dashboard" className="flex items-center">
+                <Logo className="h-9 w-9" />
+              </Link>
             </div>
 
-            {/* Right side */}
-            <div className="flex items-center gap-3 md:gap-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                <Search className="h-5 w-5" />
-              </button>
+            <div className="flex items-center gap-2 md:gap-3">
               <NotificationBell />
-              <div className="hidden lg:block relative">
-                <button
-                  onClick={() => setProfileOpen(!profileOpen)}
-                  className="p-0 rounded-lg transition-all hover:opacity-80"
-                >
-                  <Avatar className="h-9 w-9" />
-                </button>
-
-                {profileOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 p-4 z-50">
-                    <div className="flex items-center gap-3 mb-4">
-                      <Avatar className="h-12 w-12" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {userName}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate">
-                          {user.email}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        handleSignOut();
-                        setProfileOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
+              <button className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <Avatar className="h-8 w-8" />
+              </button>
             </div>
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="p-4 md:p-6 lg:p-8">
-          {children}
+        {/* Page content with proper scrolling */}
+        <main className="flex-1 overflow-y-auto pb-20 lg:pb-6">
+          <div className="p-4 md:p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
+          </div>
         </main>
       </div>
 
       {/* Mobile Sidebar */}
       <aside
         className={cn(
-          "lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-100 transform transition-transform duration-300 shadow-xl",
+          "lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold">S</span>
-              </div>
-              <div>
-                <span className="font-bold text-lg text-gray-900 block">
-                  SplitXo
-                </span>
-                <span className="text-xs text-gray-500">Split Smart</span>
-              </div>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+          <Link to="/dashboard" className="flex items-center gap-3" onClick={() => setSidebarOpen(false)}>
+            <Logo className="h-8 w-8" />
+            <div>
+              <span className="font-bold text-lg text-gray-900 block leading-tight">
+                SplitXO
+              </span>
+              <span className="text-[10px] text-gray-500 leading-tight">Split Smart</span>
             </div>
-            <button
-              className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </button>
+          </Link>
+          <button
+            className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hide">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  isActive
+                    ? "bg-gradient-to-r from-emerald-50 to-teal-50 text-teal-700"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                )}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Icon className={cn("h-5 w-5", isActive && "text-teal-600")} />
+                <span className="flex-1">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="p-3 border-t border-gray-200 space-y-3 flex-shrink-0">
+          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="h-5 w-5" />
+                <span className="font-bold text-sm">Upgrade Now</span>
+              </div>
+              <p className="text-xs text-emerald-50 mb-3">
+                Unlock premium features
+              </p>
+              <button className="w-full bg-white text-teal-600 rounded-lg py-2 px-3 text-xs font-semibold hover:bg-emerald-50 transition-colors">
+                Upgrade Plan
+              </button>
+            </div>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
-                    isActive
-                      ? "bg-teal-50 text-teal-600"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  )}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span className="flex-1">{item.label}</span>
-                  {isActive && (
-                    <div className="h-2 w-2 rounded-full bg-teal-600"></div>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* User section */}
-          <div className="p-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 mb-3">
-              <Avatar />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">
-                  {userName}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {user.email}
-                </p>
-              </div>
+          <div className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+            <Avatar className="h-9 w-9" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">
+                {userName}
+              </p>
+              <p className="text-xs text-gray-500 truncate">
+                {userEmail}
+              </p>
             </div>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
           </div>
+
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg h-9"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
       </aside>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-200 shadow-lg">
+        <div className="flex items-center justify-around h-16 px-1">
+          {mobileNavItems.map((item) => {
+            const isActive = location.pathname === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 py-2 px-2 rounded-lg transition-all duration-200 flex-1 min-w-0",
+                  isActive
+                    ? "text-teal-600"
+                    : "text-gray-400 hover:text-gray-600"
+                )}
+              >
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                <span className="text-[10px] font-medium truncate w-full text-center">{item.label}</span>
+              </Link>
+            );
+          })}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex flex-col items-center justify-center gap-1 py-2 px-2 rounded-lg text-gray-400 hover:text-gray-600 transition-all flex-1 min-w-0"
+          >
+            <Menu className="h-5 w-5 flex-shrink-0" />
+            <span className="text-[10px] font-medium truncate w-full text-center">More</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }

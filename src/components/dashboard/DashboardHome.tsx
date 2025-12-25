@@ -29,6 +29,9 @@ import { SettleModal } from "@/components/balances/SettleModal";
 import { GroupCard } from "@/components/groups/GroupCard";
 import { ExpenseCard } from "@/components/expenses/ExpenseCard";
 import { Group } from "@/hooks/useGroups";
+import Transaction from "../ui/transaction";
+
+import { StatsExpandCard } from "../ui/StatsExpandCard";
 
 interface DashboardHomeProps {
   user: User;
@@ -855,8 +858,18 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
                 </div>
               )}
             </div>
+           
           </motion.div>
+          <StatsExpandCard 
+  userId={user.id} 
+  totalGroups={groups.length}
+  allExpenses={expenses}
+/>
+       
+          
+          
         </div>
+        
       </div>
 
       {/* Modals */}

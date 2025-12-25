@@ -13,6 +13,7 @@ import {
   Calendar,
   Users,
   Wallet,
+  IndianRupee,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -332,7 +333,7 @@ export default function Expenses() {
             className="bg-card rounded-xl border border-border/50 shadow-lg p-8 sm:p-12 lg:p-16 text-center"
           >
             <div className="p-4 sm:p-5 rounded-full bg-gradient-to-br from-teal-500/10 to-emerald-500/10 inline-block mb-4 sm:mb-6">
-              <Receipt className="h-8 w-8 sm:h-10 sm:w-10 text-teal-600" />
+              <IndianRupee className="h-8 w-8 sm:h-10 sm:w-10 text-teal-600" />
             </div>
             <h3 className="font-bold text-foreground mb-2 sm:mb-3 text-lg sm:text-xl">
               {searchQuery || selectedCategory !== "all" || selectedGroupId !== "all"

@@ -531,7 +531,8 @@ import {
   TrendingDown,
   CheckCircle2,
   Clock,
-  ImageIcon
+  ImageIcon,
+  IndianRupee
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -858,7 +859,7 @@ function SettlementsContent({ user }: { user: User }) {
         {settlements.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center px-4">
             <div className="p-4 sm:p-5 rounded-full bg-gradient-to-br from-teal-500/10 to-emerald-500/10 mb-4">
-              <Receipt className="h-8 w-8 sm:h-10 sm:w-10 text-teal-600" />
+              <IndianRupee className="h-8 w-8 sm:h-10 sm:w-10 text-teal-600" />
             </div>
             <h3 className="font-semibold text-foreground mb-2 text-base sm:text-lg">No settlements yet</h3>
             <p className="text-xs sm:text-sm text-muted-foreground max-w-sm">
