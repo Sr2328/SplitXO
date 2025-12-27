@@ -1,16 +1,15 @@
-// src/pages/explore/ExplorePage.tsx
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   MapPin, 
   Search, 
-  Compass, 
-  TrendingUp, 
   Star, 
   Heart,
-  Navigation,
   ChevronRight,
   MapPinned,
+  TrendingUp,
+  ShoppingBag,
+  Filter
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -279,259 +278,246 @@ export default function ExplorePage() {
 
   return (
     <DashboardLayout user={user}>
-      {/* Hero Section */}
-      <motion.div
-  initial={{ opacity: 0, y: -20 }}
-  animate={{ opacity: 1, y: 0 }}
-  className="
-    relative overflow-hidden
-    bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700
-    px-3 py-6
-    sm:px-4 sm:py-8
-    rounded-xl shadow-xl
-    mx-2 sm:mx-4 md:mx-0
-  "
->
-  {/* Decorative circles */}
-  <div className="absolute top-0 right-0 w-28 h-28 sm:w-40 sm:h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-  <div className="absolute bottom-0 left-0 w-20 h-20 sm:w-28 sm:h-28 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-
-  <div className="relative z-10 max-w-6xl mx-auto">
-    {/* Heading */}
-    <div className="flex items-center gap-2 mb-2">
-      <Compass className="w-6 h-6 text-white" />
-      <h1 className="text-3xl sm:text-4xl font-bold text-white">
-        Explore
-      </h1>
-    </div>
-
-    <p className="text-white/90 text-sm sm:text-base mb-5 max-w-xl">
-      Discover amazing places, split expenses with friends, and make memories
-    </p>
-
-    {/* Search Bar */}
-    <div className="bg-white rounded-xl shadow-lg p-2.5 sm:p-3">
-      <div className="flex flex-col gap-2">
-        {/* Search Input */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Search places..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="
-              w-full pl-9 pr-3 py-2
-              rounded-lg border-2 border-gray-200
-              focus:border-[#1CC29F]
-              text-sm
-            "
-          />
-        </div>
-
-        {/* Location + Button */}
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Location..."
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="
-                w-full pl-9 pr-3 py-2
-                rounded-lg border-2 border-gray-200
-                focus:border-[#1CC29F]
-                text-sm
-              "
-            />
-          </div>
-
-          <Button
-            onClick={handleLocationDetect}
-            className="
-              bg-[#1CC29F] hover:bg-[#15A886]
-              text-white px-4 py-2
-              rounded-lg font-semibold
-              flex items-center justify-center gap-2
-              text-sm whitespace-nowrap
-            "
-          >
-            <Navigation className="w-4 h-4" />
-            Location
-          </Button>
-        </div>
-      </div>
-    </div>
-  </div>
-</motion.div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto ">
-        
-        {/* Categories Scroll */}
-        <div className="mb-8 sm:mb-10">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 px-0">
-            Categories
-          </h2>
-
-          <div className="flex gap-2 sm:gap-4 overflow-x-auto no-scrollbar py-2 px-0 scroll-smooth">
-            {categories.map((category, index) => (
-              <motion.button
-                key={category.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => setSelectedCategory(category.slug)}
-                className={`
-                  flex-shrink-0
-                  w-20 h-20 sm:w-24 sm:h-24
-                  rounded-full
-                  p-3 sm:p-4
-                  cursor-pointer
-                  transition-all duration-300
-                  ${
-                    selectedCategory === category.slug
-                      ? "bg-white shadow-xl scale-105"
-                      : "bg-gray-100 shadow-md hover:shadow-lg hover:-translate-y-1"
-                  }
-                `}
-              >
-                <div className="flex flex-col items-center justify-center h-full gap-1 sm:gap-2">
-                  {category.icon && category.icon.startsWith('http') ? (
-                    <img
-                      src={category.icon}
-                      alt={category.name}
-                      className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
-                      onError={(e) => {
-                        e.currentTarget.src = '';
-                      }}
-                    />
-                  ) : (
-                    <span className="text-2xl sm:text-3xl">
-                      {category.icon || ''}
+      <div className="min-h-screen bg-gray-50 pb-8">
+        {/* Header Section - Rounded with Shadow */}
+        <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 rounded-3xl shadow-2xl mx-4 sm:mx-6 lg:mx-8 mt-6 mb-8">
+          <div className="px-4 sm:px-6 lg:px-8 py-6">
+            {/* Top Bar */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <div>
+                  <p className="text-white text-base sm:text-lg font-semibold">Explore</p>
+                  <button 
+                    onClick={handleLocationDetect}
+                    className="flex items-center gap-1 text-white/90 font-medium text-xs sm:text-sm hover:text-white transition-colors"
+                  >
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="max-w-[120px] sm:max-w-[200px] truncate">
+                      {location || 'Detect location'}
                     </span>
-                  )}
-                  <span className="text-xs font-semibold text-gray-700 text-center line-clamp-2">
-                    {category.name}
+                    <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="relative text-white p-2 hover:bg-white/10 rounded-lg transition-colors">
+                  <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-bold text-[10px] sm:text-xs">
+                    0
                   </span>
-                </div>
-              </motion.button>
-            ))}
-          </div>
-        </div>
-
-        {/* Conditional Rendering: All vs Category View */}
-        {selectedCategory === 'all' ? (
-          // All Categories Sections
-          <div className="space-y-8 sm:space-y-12">
-            {categories.filter(c => c.id !== 'all').map((category) => {
-              const categoryPlaces = getPlacesByCategory(category.slug);
-              if (categoryPlaces.length === 0) return null;
-
-              return (
-                <div key={category.id}>
-                  {/* Category Header */}
-                  <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                    <div 
-                      className="w-1 h-6 sm:h-8 rounded-full"
-                      style={{ backgroundColor: category.color }}
-                    />
-                    <h3 className="text-lg sm:text-2xl font-bold text-gray-800">
-                      {category.name}
-                    </h3>
-                    <span className="bg-gray-200 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm text-gray-600 ml-auto">
-                      {categoryPlaces.length}
-                    </span>
-                  </div>
-
-                  {/* Category Places Grid */}
-                  {isLoading ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                      {[...Array(4)].map((_, i) => (
-                        <div key={i} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 animate-pulse">
-                          <div className="w-full h-32 sm:h-40 md:h-48 bg-gray-200 rounded-lg sm:rounded-xl mb-3 sm:mb-4" />
-                          <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4 mb-2" />
-                          <div className="h-3 sm:h-4 bg-gray-200 rounded w-1/2" />
-                        </div>
-                      ))}
-                    </div>
-                                      ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                      {categoryPlaces.slice(0, 4).map((place, index) => (
-                        <PlaceCard
-                          key={place.id}
-                          place={place}
-                          index={index}
-                          onBookmark={toggleBookmark}
-                          onClick={handlePlaceClick}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {categoryPlaces.length > 4 && (
-                    <div className="text-center mt-4 sm:mt-6">
-                      <Button
-                        onClick={() => setSelectedCategory(category.slug)}
-                        className="text-[#1CC29F] hover:text-[#15A886] font-semibold text-sm sm:text-base"
-                        variant="ghost"
-                      >
-                        View All {category.name}
-                        <ChevronRight className="w-4 h-4 ml-1" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          // Single Category View
-          <div>
-            {/* Results Header */}
-            <div className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-8 flex-wrap">
-              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-[#1CC29F] flex-shrink-0" />
-              <h2 className="text-lg sm:text-2xl font-bold text-gray-800">
-                {categories.find(c => c.slug === selectedCategory)?.name}
-              </h2>
-              <span className="bg-gray-200 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm text-gray-600">
-                {places.length} found
-              </span>
+                </button>
+              </div>
             </div>
 
-            {/* Places Grid */}
-            {isLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 animate-pulse">
-                    <div className="w-full h-32 sm:h-40 md:h-48 bg-gray-200 rounded-lg sm:rounded-xl mb-3 sm:mb-4" />
-                    <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4 mb-2" />
-                    <div className="h-3 sm:h-4 bg-gray-200 rounded w-1/2" />
-                  </div>
-                ))}
-              </div>
-            ) : places.length === 0 ? (
-              <div className="text-center py-12 sm:py-16">
-                <div className="text-5xl sm:text-6xl mb-4">🔍</div>
-                <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">No places found</h3>
-                <p className="text-gray-600 text-sm sm:text-base">Try adjusting your search or filters</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                {places.map((place, index) => (
-                  <PlaceCard
-                    key={place.id}
-                    place={place}
-                    index={index}
-                    onBookmark={toggleBookmark}
-                    onClick={handlePlaceClick}
-                  />
-                ))}
-              </div>
-            )}
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 z-10" />
+              <Input
+                type="text"
+                placeholder="Search for places, activities..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-white text-gray-800 text-sm sm:text-base border-0 focus:ring-2 focus:ring-white/50 shadow-lg"
+              />
+              <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-emerald-500 rounded-lg sm:rounded-xl hover:bg-emerald-600 transition-colors">
+                <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </button>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Categories Section */}
+          <div className="mb-8">
+            <div className="grid grid-cols-3 sm:flex sm:flex-wrap lg:flex-nowrap gap-3 sm:gap-4">
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.slug)}
+                  className={`flex flex-col items-center gap-2 transition-all duration-300 ${
+                    selectedCategory === category.slug ? 'scale-105' : 'opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  <div 
+                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-md transition-all duration-300 ${
+                      selectedCategory === category.slug 
+                        ? 'bg-white shadow-xl' 
+                        : 'bg-white/80 hover:shadow-lg'
+                    }`}
+                    style={{
+                      borderBottom: selectedCategory === category.slug 
+                        ? `4px solid ${category.color}` 
+                        : 'none'
+                    }}
+                  >
+                    {category.icon && category.icon.startsWith('http') ? (
+                      <img
+                        src={category.icon}
+                        alt={category.name}
+                        className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <span className="text-2xl sm:text-3xl">{category.icon || '📍'}</span>
+                    )}
+                  </div>
+                  <span className={`text-xs sm:text-sm font-medium text-center line-clamp-2 px-1 ${
+                    selectedCategory === category.slug 
+                      ? 'text-gray-900 font-semibold' 
+                      : 'text-gray-600'
+                  }`}>
+                    {category.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Promotional Banner - Rounded with Shadow */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg overflow-hidden relative"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="relative z-10">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">
+                Fresh Deals, Fresh Adventures! 🎉
+              </h2>
+              <p className="text-white/90 text-sm sm:text-base mb-4">
+                Discover amazing places and create unforgettable memories
+              </p>
+              <Button className="bg-white text-emerald-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-sm sm:text-base hover:bg-gray-50 transition-colors shadow-md hover:shadow-lg">
+                EXPLORE NOW
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Conditional Rendering */}
+          {selectedCategory === 'all' ? (
+            // All Categories View
+            <div className="space-y-10">
+              {categories.filter(c => c.id !== 'all').map((category) => {
+                const categoryPlaces = getPlacesByCategory(category.slug);
+                if (categoryPlaces.length === 0) return null;
+
+                return (
+                  <div key={category.id}>
+                    {/* Section Header */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-1 h-8 rounded-full"
+                          style={{ backgroundColor: category.color }}
+                        />
+                        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                          {category.name} For You
+                        </h3>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        onClick={() => setSelectedCategory(category.slug)}
+                        className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm sm:text-base flex items-center gap-1 hover:bg-transparent"
+                      >
+                        See all
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    {/* Horizontal Scroll Grid */}
+                    {isLoading ? (
+                      <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                        {[...Array(4)].map((_, i) => (
+                          <div key={i} className="bg-white rounded-2xl p-4 animate-pulse w-72 sm:w-80 flex-shrink-0 shadow-md">
+                            <div className="w-full h-48 bg-gray-200 rounded-xl mb-4" />
+                            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                            <div className="h-4 bg-gray-200 rounded w-1/2" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        {categoryPlaces.slice(0, 6).map((place, index) => (
+                          <PlaceCard
+                            key={place.id}
+                            place={place}
+                            index={index}
+                            onBookmark={toggleBookmark}
+                            onClick={handlePlaceClick}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {places.length === 0 && !isLoading && (
+                <div className="text-center py-16">
+                  <div className="text-6xl mb-4">🔍</div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                    No places found
+                  </h3>
+                  <p className="text-gray-600">
+                    Try adjusting your search or check back later
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            // Single Category View
+            <div>
+              <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
+                  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                    {categories.find(c => c.slug === selectedCategory)?.name}
+                  </h2>
+                  <span className="bg-gray-200 px-3 py-1 rounded-full text-sm text-gray-600 font-medium">
+                    {places.length} found
+                  </span>
+                </div>
+              </div>
+
+              {isLoading ? (
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-2xl p-4 animate-pulse shadow-md">
+                      <div className="w-full h-48 bg-gray-200 rounded-xl mb-4" />
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                      <div className="h-4 bg-gray-200 rounded w-1/2" />
+                    </div>
+                  ))}
+                </div>
+              ) : places.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="text-6xl mb-4">🔍</div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                    No places found
+                  </h3>
+                  <p className="text-gray-600">
+                    Try adjusting your search or filters
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {places.map((place, index) => (
+                    <PlaceCard
+                      key={place.id}
+                      place={place}
+                      index={index}
+                      onBookmark={toggleBookmark}
+                      onClick={handlePlaceClick}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );
@@ -555,10 +541,10 @@ function PlaceCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       onClick={() => onClick(place.id)}
-      className="bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer h-full flex flex-col"
+      className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col h-full"
     >
-      {/* Image Section */}
-      <div className="relative h-32 sm:h-40 md:h-48 overflow-hidden flex-shrink-0">
+      {/* Image */}
+      <div className="relative h-40 sm:h-48 overflow-hidden flex-shrink-0">
         <img
           src={place.image_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600'}
           alt={place.name}
@@ -566,7 +552,7 @@ function PlaceCard({
         />
         
         {place.is_featured && (
-          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold flex items-center gap-1 shadow-lg">
             <Star className="w-3 h-3 fill-current" />
             Featured
           </div>
@@ -577,88 +563,96 @@ function PlaceCard({
             e.stopPropagation();
             onBookmark(place.id);
           }}
-          className={`absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 rounded-full transition-colors shadow-lg ${
+          className={`absolute top-2 sm:top-3 right-2 sm:right-3 p-1.5 sm:p-2 rounded-full transition-all duration-300 shadow-lg ${
             place.is_bookmarked 
-              ? 'bg-red-500 text-white' 
-              : 'bg-white/90 text-gray-700 hover:bg-red-500 hover:text-white'
+              ? 'bg-red-500 text-white scale-110' 
+              : 'bg-white/90 text-gray-700 hover:bg-red-500 hover:text-white hover:scale-110'
           }`}
         >
-          <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${place.is_bookmarked ? 'fill-current' : ''}`} />
+          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${place.is_bookmarked ? 'fill-current' : ''}`} />
         </button>
 
         {place.distance && (
-          <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-white/90 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full text-xs font-semibold text-gray-700 flex items-center gap-1">
-            <MapPinned className="w-3 h-3 flex-shrink-0" />
+          <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 bg-white/95 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold text-gray-700 flex items-center gap-1 shadow-md">
+            <MapPinned className="w-3 h-3" />
             {place.distance} km
           </div>
         )}
       </div>
 
-      {/* Content Section */}
-      <div className="p-3 sm:p-4 md:p-5 flex flex-col flex-grow">
-        {/* Title and Rating */}
+      {/* Content */}
+      <div className="p-3 sm:p-4 flex flex-col flex-grow">
+        {/* Title & Rating */}
         <div className="flex items-start justify-between mb-2 gap-2">
-          <h3 className="font-bold text-sm sm:text-base md:text-lg text-gray-800 hover:text-[#1CC29F] transition-colors line-clamp-2">
+          <h3 className="font-bold text-sm sm:text-base text-gray-900 line-clamp-2 flex-1">
             {place.name}
           </h3>
-          <div className="flex items-center gap-1 text-yellow-500 flex-shrink-0">
-            <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-current" />
-            <span className="font-semibold text-xs sm:text-sm text-gray-700">{place.rating}</span>
-          </div>
+          {place.rating && (
+            <div className="flex items-center gap-0.5 sm:gap-1 bg-emerald-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg flex-shrink-0">
+              <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-emerald-500 text-emerald-500" />
+              <span className="font-bold text-xs sm:text-sm text-gray-900">{place.rating}</span>
+            </div>
+          )}
         </div>
 
         {/* Description */}
         {place.description && (
-          <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2">
+          <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2 flex-grow">
             {place.description}
           </p>
         )}
 
         {/* Meta Info */}
-        <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 text-xs sm:text-sm text-gray-500 flex-wrap">
+        <div className="flex items-center justify-between text-xs sm:text-sm mb-2 sm:mb-3">
           {place.city && (
-            <div className="flex items-center gap-1 min-w-0">
+            <div className="flex items-center gap-1 text-gray-500 min-w-0 flex-1">
               <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-              <span className="truncate text-xs sm:text-sm">{place.city}</span>
+              <span className="truncate">{place.city}</span>
             </div>
           )}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <span className="text-[#1CC29F] font-bold text-xs sm:text-sm">
-              {'₹'.repeat(place.price_level)}
-            </span>
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            {place.price_level && place.price_level > 0 && (
+              <span className="text-emerald-600 font-bold text-xs sm:text-sm">
+                {'₹'.repeat(place.price_level)}
+              </span>
+            )}
+            {place.review_count > 0 && (
+              <span className="text-gray-400 text-[10px] sm:text-xs">
+                ({place.review_count})
+              </span>
+            )}
           </div>
-          {place.review_count > 0 && (
-            <span className="text-gray-400 text-xs">
-              {place.review_count} reviews
-            </span>
-          )}
         </div>
 
         {/* Tags */}
         {place.tags && place.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4">
+          <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-3">
             {place.tags.slice(0, 2).map((tag, i) => (
               <span
                 key={i}
-                className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-medium"
+                className="bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium"
               >
                 {tag}
               </span>
             ))}
             {place.tags.length > 2 && (
-              <span className="text-gray-500 text-xs px-2 py-1">
+              <span className="text-gray-500 text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 sm:py-1">
                 +{place.tags.length - 2}
               </span>
             )}
           </div>
         )}
 
-        {/* Button */}
+        {/* View Details Button */}
         <Button
-          className="w-full bg-gradient-to-r from-[#1CC29F] to-[#15A886] text-white hover:shadow-lg text-sm sm:text-base py-2 sm:py-3 mt-auto"
+          className="w-full bg-gradient-to-r from-[#1CC29F] to-[#15A886] text-white hover:shadow-lg text-xs sm:text-sm py-2 sm:py-2.5 mt-auto"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick(place.id);
+          }}
         >
           View Details
-          <ChevronRight className="w-4 h-4 ml-1" />
+          <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
         </Button>
       </div>
     </motion.div>
