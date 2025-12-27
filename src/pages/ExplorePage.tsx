@@ -278,10 +278,10 @@ export default function ExplorePage() {
 
   return (
     <DashboardLayout user={user}>
-      <div className="min-h-screen bg-gray-50 pb-8">
+      <div className="min-h-screen bg-gray-50 -mx-6 -mt-6">
         {/* Header Section - Rounded with Shadow */}
-        <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 rounded-3xl shadow-2xl mx-4 sm:mx-6 lg:mx-8 mt-6 mb-8">
-          <div className="px-4 sm:px-6 lg:px-8 py-6">
+        <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 rounded-3xl shadow-2xl mx-4 sm:mx-6 mt-6 mb-6">
+          <div className="px-4 sm:px-6 py-6">
             {/* Top Bar */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
@@ -327,9 +327,9 @@ export default function ExplorePage() {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="px-4 sm:px-6">
           {/* Categories Section */}
-          <div className="mb-8">
+          <div className="mb-6">
             <div className="grid grid-cols-3 sm:flex sm:flex-wrap lg:flex-nowrap gap-3 sm:gap-4">
               {categories.map((category) => (
                 <button
@@ -380,7 +380,7 @@ export default function ExplorePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg overflow-hidden relative"
+            className="mb-6 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg overflow-hidden relative"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="relative z-10">
@@ -390,7 +390,7 @@ export default function ExplorePage() {
               <p className="text-white/90 text-sm sm:text-base mb-4">
                 Discover amazing places and create unforgettable memories
               </p>
-              <Button className="bg-white text-emerald-600 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold text-sm sm:text-base hover:bg-gray-50 transition-colors shadow-md hover:shadow-lg">
+              <Button className="border border-white/30 text-white hover:bg-white/10 rounded-lg font-semibold shadow-md hover:shadow-lg">
                 EXPLORE NOW
               </Button>
             </div>
@@ -399,7 +399,7 @@ export default function ExplorePage() {
           {/* Conditional Rendering */}
           {selectedCategory === 'all' ? (
             // All Categories View
-            <div className="space-y-10">
+            <div className="space-y-8">
               {categories.filter(c => c.id !== 'all').map((category) => {
                 const categoryPlaces = getPlacesByCategory(category.slug);
                 if (categoryPlaces.length === 0) return null;
@@ -407,7 +407,7 @@ export default function ExplorePage() {
                 return (
                   <div key={category.id}>
                     {/* Section Header */}
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div 
                           className="w-1 h-8 rounded-full"
@@ -456,7 +456,7 @@ export default function ExplorePage() {
               })}
 
               {places.length === 0 && !isLoading && (
-                <div className="text-center py-16">
+                <div className="text-center py-12">
                   <div className="text-6xl mb-4">🔍</div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-2">
                     No places found
@@ -470,7 +470,7 @@ export default function ExplorePage() {
           ) : (
             // Single Category View
             <div>
-              <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
                   <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
@@ -493,7 +493,7 @@ export default function ExplorePage() {
                   ))}
                 </div>
               ) : places.length === 0 ? (
-                <div className="text-center py-16">
+                <div className="text-center py-12">
                   <div className="text-6xl mb-4">🔍</div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-2">
                     No places found
