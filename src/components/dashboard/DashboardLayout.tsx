@@ -7,7 +7,6 @@ import {
   LogOut,
   Menu,
   X,
-  Bell,
   Wallet,
   ArrowRightLeft,
   IndianRupee,
@@ -173,6 +172,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           scrollbar-width: none;
         }
       `}</style>
+
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -317,7 +317,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         "h-screen flex flex-col transition-all duration-300 ease-in-out",
         sidebarCollapsed ? "lg:pl-20" : "lg:pl-64"
       )}>
-        {/* Top Header */}
+        {/* Top Header - Enhanced */}
         <header className="h-16 bg-white shadow-sm flex-shrink-0 z-30 border-b border-gray-100">
           <div className="flex items-center justify-between h-full px-4 md:px-6 lg:px-8">
             <div className="flex items-center gap-3">
@@ -328,13 +328,30 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
                 <Menu className="h-5 w-5" />
               </button>
               
-              <Link to="/dashboard" className="flex items-center">
+              <Link to="/dashboard" className="flex items-center gap-2.5">
                 <Logo className="h-9 w-9" />
+                <div className="hidden sm:block">
+                  <span className="font-bold text-lg text-gray-900 block leading-tight">
+                    SplitXO
+                  </span>
+                  <span className="text-[10px] text-gray-500 leading-tight">Split expenses smart</span>
+                </div>
               </Link>
             </div>
 
             <div className="flex items-center gap-2 md:gap-3">
               <NotificationBell />
+              <div className="hidden lg:flex items-center gap-2 pl-2 border-l border-gray-200">
+                <Avatar className="h-8 w-8" />
+                <div className="hidden xl:block">
+                  <p className="text-sm font-semibold text-gray-900 leading-tight">
+                    {userName}
+                  </p>
+                  <p className="text-xs text-gray-500 leading-tight truncate max-w-[150px]">
+                    {userEmail}
+                  </p>
+                </div>
+              </div>
               <button className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                 <Avatar className="h-8 w-8" />
               </button>
@@ -342,9 +359,9 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           </div>
         </header>
 
-        {/* Page content with proper scrolling */}
-        <main className="flex-1 overflow-y-auto pb-20 lg:pb-6">
-          <div className="p-4 md:p-6 lg:p-8">
+        {/* Page content with proper spacing for floating nav */}
+        <main className="flex-1 overflow-y-auto scrollbar-hide">
+          <div className="p-4 md:p-6 lg:p-8 pb-28 lg:pb-8">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>
@@ -440,35 +457,35 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         </div>
       </aside>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-200 shadow-lg">
-        <div className="flex items-center justify-around h-16 px-1">
-          {mobileNavItems.map((item) => {
-            const isActive = location.pathname === item.href;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1 py-2 px-2 rounded-lg transition-all duration-200 flex-1 min-w-0",
-                  isActive
-                    ? "text-teal-600"
-                    : "text-gray-400 hover:text-gray-600"
-                )}
-              >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                <span className="text-[10px] font-medium truncate w-full text-center">{item.label}</span>
-              </Link>
-            );
-          })}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="flex flex-col items-center justify-center gap-1 py-2 px-2 rounded-lg text-gray-400 hover:text-gray-600 transition-all flex-1 min-w-0"
-          >
-            <Menu className="h-5 w-5 flex-shrink-0" />
-            <span className="text-[10px] font-medium truncate w-full text-center">More</span>
-          </button>
+      {/* Floating Mobile Bottom Navigation - Android Style */}
+      <nav className="fixed bottom-4 left-4 right-4 z-40 lg:hidden">
+        <div className="bg-white rounded-full shadow-2xl border border-gray-200 px-2 py-3">
+          <div className="flex items-center justify-around">
+            {mobileNavItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={cn(
+                    "flex items-center justify-center p-3 rounded-full transition-all duration-200 relative",
+                    isActive
+                      ? "bg-gray-900 text-white scale-110"
+                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                  )}
+                >
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                </Link>
+              );
+            })}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="flex items-center justify-center p-3 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all"
+            >
+              <Menu className="h-5 w-5 flex-shrink-0" />
+            </button>
+          </div>
         </div>
       </nav>
     </div>
