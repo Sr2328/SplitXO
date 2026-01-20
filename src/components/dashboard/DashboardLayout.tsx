@@ -471,7 +471,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
                   className={cn(
                     "flex items-center justify-center p-3 rounded-full transition-all duration-200 relative",
                     isActive
-                      ? "bg-gray-900 text-white scale-110"
+                      ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white scale-110 shadow-lg shadow-emerald-500/30"
                       : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                   )}
                 >

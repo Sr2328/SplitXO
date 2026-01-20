@@ -1,9 +1,10 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, CheckCircle } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatedListDemo } from "../AnimatedListDemo";
 import { Link } from "react-router-dom";
 import GetStarted from "../ui/GetStarted";
+import TextType from '../ui/TextType';
 
 declare global {
   namespace JSX {
@@ -17,6 +18,150 @@ declare global {
       }, HTMLElement>;
     }
   }
+}
+
+// Initial Landing Screen Component
+function InitialLanding() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const existingScript = document.querySelector('script[src*="dotlottie-player"]');
+    if (existingScript) return;
+
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs";
+    script.type = "module";
+    document.body.appendChild(script);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.8 }}
+      className="fixed inset-0 z-50 flex items-center justify-center 
+             bg-gradient-to-br from-[#0b1f26] via-[#0f4d3a] to-[#062e24]"
+    >
+      <div className="container px-4 md:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
+          {/* Left Side - Lottie Animation */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, delay: 0.3 }}
+            ref={containerRef}
+            className="flex items-center justify-center"
+          >
+            <div className="w-full max-w-lg">
+              <dotlottie-player
+                src="https://lottie.host/7bb825d1-db9f-4d2a-b702-2ee182115348/Pqln7rcdtT.lottie"
+                background="transparent"
+                speed="1"
+                style={{ width: "100%", height: "100%" }}
+                loop
+                autoplay
+              />
+            </div>
+          </motion.div>
+
+          {/* Right Side - Typing Text */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, delay: 0.5 }}
+            className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-8"
+          >
+            {/* Main Heading with Typing Effect */}
+            <div className="space-y-6">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white">
+                <TextType
+                  text={[
+                    "Welcome to",
+                    "Srdev Creation",
+                    "(Sachin Yadav)"
+                  ]}
+                  typingSpeed={100}
+                  deletingSpeed={60}
+                  pauseDuration={1200}
+                  showCursor={true}
+                  cursorCharacter="|"
+                  cursorBlinkDuration={0.7}
+                />
+              </h1>
+
+              {/* Subtitle */}
+              <div className="text-xl md:text-2xl lg:text-3xl text-gray-200 space-y-4">
+                <p className="font-light">
+                  Introducing{" "}
+                  <span className="font-semibold bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent">
+                    SplitXo
+                  </span>
+                </p>
+                <p className="text-lg md:text-xl text-gray-300">
+                  Your ultimate expense management app
+                </p>
+              </div>
+
+              {/* Description with second typing effect */}
+              <div className="text-base md:text-lg text-gray-400 mt-6">
+                <TextType
+                  text={[
+                    "Split expenses with friends effortlessly...",
+                    "Track every penny with ease...",
+                    "Settle debts in seconds...",
+                    "Manage group finances like a pro!"
+                  ]}
+                  typingSpeed={75}
+                  deletingSpeed={50}
+                  pauseDuration={2000}
+                  showCursor={true}
+                  cursorCharacter="_"
+                  cursorBlinkDuration={0.5}
+                />
+              </div>
+            </div>
+
+            {/* Decorative Elements */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.6, delay: 1.5 }}
+              className="flex items-center gap-3 px-6 py-3 rounded-full bg-emerald-500/20 backdrop-blur-sm border border-emerald-400/30"
+            >
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400"></span>
+              </span>
+              <span className="text-emerald-300 font-medium">Loading your experience...</span>
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Background decorations */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ duration: 8, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute bottom-1/4 left-1/4 w-80 h-80 rounded-full bg-emerald-400/10 blur-3xl"
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.2, 0.4, 0.2]
+          }}
+          transition={{ duration: 10, repeat: Infinity, delay: 2 }}
+        />
+      </div>
+    </motion.div>
+  );
 }
 
 // Feature Card 1 - Expense Split
@@ -42,35 +187,6 @@ function ExpenseSplitCard({ delay }: { delay: number }) {
           </span>
           <p className="text-lg font-semibold text-gray-900 dark:text-white">Expense Split</p>
         </div>
-        {/* <div className="flex items-center gap-1 bg-emerald-500/10 px-3 py-1 rounded-full">
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 48 48"
-    width={16}
-    height={16}
-    className="text-emerald-600 dark:text-emerald-400"
-  >
-    <path
-      fill="none"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="m24 5.768l18.5 11.166v19.994a5.292 5.292 0 0 1-5.28 5.304H10.804a5.292 5.292 0 0 1-5.304-5.28V16.934L24 5.768Zm-6.197 18.35h12.394m-8.652-6.315h8.652"
-    />
-    <path
-      fill="none"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M17.803 17.803h3.742a6.288 6.288 0 0 1 6.314 6.262v.053a6.288 6.288 0 0 1-6.262 6.314h-.052l6.314 6.08"
-    />
-  </svg>
-
-  <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
-    20%
-  </span> */}
-{/* </div> */}
-
       </div>
 
       {/* Data */}
@@ -112,12 +228,6 @@ function ExpenseTrackingCard({ delay }: { delay: number }) {
           </span>
           <p className="text-lg font-semibold text-gray-900 dark:text-white">Expense Tracking</p>
         </div>
-        {/* <div className="flex items-center gap-1 bg-emerald-500/10 px-3 py-1 rounded-full">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" height={16} width={16} className="text-emerald-600 dark:text-emerald-400">
-            <path d="M7 10l5 5 5-5z" />
-          </svg>
-          <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm">15%</span>
-        </div> */}
       </div>
 
       {/* Data */}
@@ -159,12 +269,6 @@ function ExpenseSettleCard({ delay }: { delay: number }) {
           </span>
           <p className="text-lg font-semibold text-gray-900 dark:text-white">Expense Settle</p>
         </div>
-        {/* <div className="flex items-center gap-1 bg-emerald-500/10 px-3 py-1 rounded-full">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" height={16} width={16} className="text-emerald-600 dark:text-emerald-400">
-            <path d="M7 10l5 5 5-5z" />
-          </svg>
-          <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm">85%</span>
-        </div> */}
       </div>
 
       {/* Data */}
@@ -189,173 +293,164 @@ function ExpenseSettleCard({ delay }: { delay: number }) {
 }
 
 export function HeroSection() {
+  const [showInitial, setShowInitial] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowInitial(false);
+    }, 15000); // 15 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Lottie Animation Background - Behind text content */}
-      <LottieAnimationBackground />
-      
-      {/* Background decorations */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-emerald-500/5 blur-3xl"
-          animate={{
-            scale: [1, 1.1, 1],
-            opacity: [0.5, 0.3, 0.5]
-          }}
-          transition={{ duration: 8, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 10, repeat: Infinity, delay: 1 }}
-        />
-      </div>
+    <>
+      <AnimatePresence mode="wait">
+        {showInitial && <InitialLanding key="initial" />}
+      </AnimatePresence>
 
-      <div className="container relative z-10 px-4 md:px-6 lg:px-8 py-12 md:py-20">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center max-w-7xl mx-auto">
-          {/* Left Content */}
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 md:space-y-8">
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-medium"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              The smartest way to split expenses
-            </motion.div>
-
-            {/* Main heading */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-gray-900 dark:text-white"
-            >
-              Split expenses{" "}
-              <span className="bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent">
-                effortlessly
-              </span>
-            </motion.h1>
-
-            {/* Subtitle */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-base md:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-xl"
-            >
-              Track shared expenses, settle debts, and manage group finances with ease. Perfect for trips, roommates, and everyday life.
-            </motion.p>
-
-            {/* CTA buttons */}
-           {/* <motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.5, delay: 0.3 }}
-  className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto"
-> */}
-  {/* Primary Button */}
-  {/* <Link
-    to="/auth"
-    className="px-8 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700
-               text-white font-semibold shadow-md hover:shadow-lg
-               transition-all duration-200 flex items-center justify-center gap-2
-               w-full sm:w-auto"
-  >
-    Get Started Free
-    <ArrowRight className="h-5 w-5 translate-x-0.5" />
-  </Link> */}
-
-  {/* Secondary Button */}
-  {/* <Link
-    to="/auth"
-    className="px-8 py-3 rounded-full border border-gray-300
-               dark:border-gray-700 hover:border-emerald-500
-               text-gray-900 dark:text-white font-semibold
-               transition-all duration-200 flex items-center justify-center
-               w-full sm:w-auto"
-  >
-    Sign In
-  </Link>
-</motion.div> */}
-
-
-{/* CTA buttons */}
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.5, delay: 0.3 }}
-  className="
-    flex flex-col sm:flex-row
-    items-center
-    gap-y-4 sm:gap-x-6
-  "
->
-  {/* Get Started (Animated) */}
-  <Link
-    to="/auth"
-    className="shrink-0 w-[220px] h-[60px] flex justify-center items-center overflow-visible"
-  >
-    <GetStarted />
-  </Link>
-
-  {/* Sign In */}
-  <Link
-    to="/auth"
-    className="
-      shrink-0
-      w-[220px] h-[60px]
-      px-8 py-3 rounded-full
-      border border-gray-300 dark:border-gray-700
-      hover:border-emerald-500
-      text-gray-900 dark:text-white font-semibold
-      transition-all duration-200
-      flex items-center justify-center
-    "
-  >
-    Sign In
-  </Link>
-</motion.div>
-
-
-
-            {/* Feature Cards Grid - Desktop only */}
-            <div className="hidden lg:grid grid-cols-3 gap-4 mt-8 w-full">
-              <ExpenseSplitCard delay={0.5} />
-              <ExpenseTrackingCard delay={0.6} />
-              <ExpenseSettleCard delay={0.7} />
-            </div>
-          </div>
-
-          {/* Right Side - AnimatedListDemo */}
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="relative w-full flex justify-center lg:justify-end mt-8 lg:mt-0"
+      <AnimatePresence>
+        {!showInitial && (
+          <motion.section
+            key="main"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+            className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800"
           >
-            <div className="w-full max-w-md lg:max-w-lg">
-              <AnimatedListDemo />
+            {/* Lottie Animation Background - Behind text content */}
+            <LottieAnimationBackground />
+            
+            {/* Background decorations */}
+            <div className="absolute inset-0 overflow-hidden">
+              <motion.div
+                className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-emerald-500/5 blur-3xl"
+                animate={{
+                  scale: [1, 1.1, 1],
+                  opacity: [0.5, 0.3, 0.5]
+                }}
+                transition={{ duration: 8, repeat: Infinity }}
+              />
+              <motion.div
+                className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.3, 0.5, 0.3]
+                }}
+                transition={{ duration: 10, repeat: Infinity, delay: 1 }}
+              />
             </div>
-          </motion.div>
-        </div>
 
-        {/* Feature Cards Grid - Mobile & Tablet */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12 lg:hidden max-w-3xl mx-auto">
-          <ExpenseSplitCard delay={0.6} />
-          <ExpenseTrackingCard delay={0.7} />
-          <ExpenseSettleCard delay={0.8} />
-        </div>
-      </div>
-    </section>
+            <div className="container relative z-10 px-4 md:px-6 lg:px-8 py-12 md:py-20">
+              <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center max-w-7xl mx-auto">
+                {/* Left Content */}
+                <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 md:space-y-8">
+                  {/* Badge */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-medium"
+                  >
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    The smartest way to split expenses
+                  </motion.div>
+
+                  {/* Main heading */}
+                  <motion.h1
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-gray-900 dark:text-white"
+                  >
+                    Split expenses{" "}
+                    <span className="bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent">
+                      effortlessly
+                    </span>
+                  </motion.h1>
+
+                  {/* Subtitle */}
+                  <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="text-base md:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-xl"
+                  >
+                    Track shared expenses, settle debts, and manage group finances with ease. Perfect for trips, roommates, and everyday life.
+                  </motion.p>
+
+                  {/* CTA buttons */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                    className="
+                      flex flex-col sm:flex-row
+                      items-center
+                      gap-y-4 sm:gap-x-6
+                    "
+                  >
+                    {/* Get Started (Animated) */}
+                    <Link
+                      to="/auth"
+                      className="shrink-0 w-[220px] h-[60px] flex justify-center items-center overflow-visible"
+                    >
+                      <GetStarted />
+                    </Link>
+
+                    {/* Sign In */}
+                    <Link
+                      to="/auth"
+                      className="
+                        shrink-0
+                        w-[220px] h-[60px]
+                        px-8 py-3 rounded-full
+                        border border-gray-300 dark:border-gray-700
+                        hover:border-emerald-500
+                        text-gray-900 dark:text-white font-semibold
+                        transition-all duration-200
+                        flex items-center justify-center
+                      "
+                    >
+                      Sign In
+                    </Link>
+                  </motion.div>
+
+                  {/* Feature Cards Grid - Desktop only */}
+                  <div className="hidden lg:grid grid-cols-3 gap-4 mt-8 w-full">
+                    <ExpenseSplitCard delay={0.5} />
+                    <ExpenseTrackingCard delay={0.6} />
+                    <ExpenseSettleCard delay={0.7} />
+                  </div>
+                </div>
+
+                {/* Right Side - AnimatedListDemo */}
+                <motion.div
+                  initial={{ opacity: 0, x: 40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.8, delay: 0.4 }}
+                  className="relative w-full flex justify-center lg:justify-end mt-8 lg:mt-0"
+                >
+                  <div className="w-full max-w-md lg:max-w-lg">
+                    <AnimatedListDemo />
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Feature Cards Grid - Mobile & Tablet */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12 lg:hidden max-w-3xl mx-auto">
+                <ExpenseSplitCard delay={0.6} />
+                <ExpenseTrackingCard delay={0.7} />
+                <ExpenseSettleCard delay={0.8} />
+              </div>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
