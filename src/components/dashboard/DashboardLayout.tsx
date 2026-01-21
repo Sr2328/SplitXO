@@ -116,7 +116,6 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
     user.user_metadata?.full_name ||
     user.email?.split("@")[0] ||
     "User";
-
   const userEmail = profile?.email || user.email || "";
 
   const nameParts = userName.trim().split(" ");
@@ -317,9 +316,15 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         "h-screen flex flex-col transition-all duration-300 ease-in-out",
         sidebarCollapsed ? "lg:pl-20" : "lg:pl-64"
       )}>
-        {/* Top Header - Enhanced */}
-        <header className="h-16 bg-white shadow-sm flex-shrink-0 z-30 border-b border-gray-100">
-          <div className="flex items-center justify-between h-full px-4 md:px-6 lg:px-8">
+        {/* Top Header - Enhanced with Safe Area */}
+        <header 
+          className="h-16 bg-white shadow-sm flex-shrink-0 z-30 border-b border-gray-100"
+          style={{
+            paddingTop: 'env(safe-area-inset-top)',
+            height: 'calc(4rem + env(safe-area-inset-top))'
+          }}
+        >
+          <div className="flex items-center justify-between h-16 px-4 md:px-6 lg:px-8">
             <div className="flex items-center gap-3">
               <button
                 className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -359,9 +364,14 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           </div>
         </header>
 
-        {/* Page content with proper spacing for floating nav */}
-        <main className="flex-1 overflow-y-auto scrollbar-hide">
-          <div className="p-4 md:p-6 lg:p-8 pb-28 lg:pb-8">
+        {/* Page content with proper spacing for floating nav and safe areas */}
+        <main 
+          className="flex-1 overflow-y-auto scrollbar-hide"
+          style={{
+            paddingBottom: 'calc(7rem + env(safe-area-inset-bottom))'
+          }}
+        >
+          <div className="p-4 md:p-6 lg:p-8 lg:pb-8">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>
@@ -369,12 +379,15 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         </main>
       </div>
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar with Safe Area */}
       <aside
         className={cn(
           "lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
+        style={{
+          paddingTop: 'env(safe-area-inset-top)'
+        }}
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
           <Link to="/dashboard" className="flex items-center gap-3" onClick={() => setSidebarOpen(false)}>
@@ -457,8 +470,13 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         </div>
       </aside>
 
-      {/* Floating Mobile Bottom Navigation - Android Style */}
-      <nav className="fixed bottom-4 left-4 right-4 z-40 lg:hidden">
+      {/* Floating Mobile Bottom Navigation - Android Style with Safe Area */}
+      <nav 
+        className="fixed left-4 right-4 z-40 lg:hidden"
+        style={{
+          bottom: 'calc(1rem + env(safe-area-inset-bottom))'
+        }}
+      >
         <div className="bg-white rounded-full shadow-2xl border border-gray-200 px-2 py-3">
           <div className="flex items-center justify-around">
             {mobileNavItems.map((item) => {

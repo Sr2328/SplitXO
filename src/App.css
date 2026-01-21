@@ -1,8 +1,26 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Remove default padding on mobile */
+@media (max-width: 768px) {
+  #root {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+}
+
+/* Desktop layout */
+@media (min-width: 769px) {
+  #root {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
 }
 
 .logo {
@@ -11,9 +29,11 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -39,4 +59,17 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  .card {
+    padding: 1em;
+  }
+  
+  /* Ensure content doesn't get cut off by notches/safe areas */
+  .mobile-container {
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
+  }
 }
