@@ -16,6 +16,8 @@ import {
   Eye,
   Download,
   Zap,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,8 +32,8 @@ import { GroupCard } from "@/components/groups/GroupCard";
 import { ExpenseCard } from "@/components/expenses/ExpenseCard";
 import { Group } from "@/hooks/useGroups";
 import Transaction from "../ui/transaction";
-
 import { StatsExpandCard } from "../ui/StatsExpandCard";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardHomeProps {
   user: User;
@@ -49,19 +51,31 @@ interface StatCardProps {
   delay: number;
 }
 
+interface Expense {
+  id: string;
+  amount: number;
+  title: string;
+  expense_date: string;
+  paid_by: string;
+  created_by: string;
+  user_id: string;
+}
+
+interface Settlement {
+  id: string;
+  amount: number;
+  created_at: string;
+  paid_by: string;
+  paid_to: string;
+  notes?: string;
+}
+
 export function DashboardHome({ user = { user_metadata: { full_name: "User" }, id: "default", email: "user@example.com" } as unknown as User }: DashboardHomeProps) {
   const userName = user?.user_metadata?.full_name?.split(" ")[0] || "User";
-  const initials = user?.user_metadata?.full_name
-    ?.split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .toUpperCase() || "U";
 
-  const { groups, createGroup, deleteGroup, getGroupMembers, addMemberByEmail, removeMember } =
-    useGroups();
+  const { groups, createGroup, deleteGroup, getGroupMembers, addMemberByEmail, removeMember } = useGroups();
   const { expenses, createExpense, deleteExpense } = useExpenses();
-  const { balances, totalOwed, totalOwe, createSettlement, calculateBalances } =
-    useBalances();
+  const { balances, totalOwed, totalOwe, createSettlement, calculateBalances } = useBalances();
 
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
@@ -75,15 +89,29 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
   const [walletFlipped, setWalletFlipped] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
+  // Calendar state
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [viewMode, setViewMode] = useState<"expenses" | "settlements">("expenses");
+  const [myExpenses, setMyExpenses] = useState<Expense[]>([]);
+  const [othersExpenses, setOthersExpenses] = useState<Expense[]>([]);
+  const [settlements, setSettlements] = useState<Settlement[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+
   useEffect(() => {
     fetchMonthlyExpenses();
   }, [expenses]);
+
+  useEffect(() => {
+    if (selectedDate) {
+      fetchDayData(selectedDate);
+    }
+  }, [selectedDate, viewMode]);
 
   const fetchMonthlyExpenses = async () => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-
     const monthlyData = Array(6).fill(0);
 
     expenses.forEach((expense) => {
@@ -97,6 +125,52 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
     });
 
     setMonthlyExpenses(monthlyData);
+  };
+
+  const fetchDayData = async (date: Date) => {
+    setCalendarLoading(true);
+    try {
+      const dateStr = date.toISOString().split('T')[0];
+
+      if (viewMode === "expenses") {
+        const myExpensesData = expenses.filter(exp => {
+          const expDate = new Date(exp.expense_date).toISOString().split('T')[0];
+          return expDate === dateStr && exp.created_by === user.id;
+        });
+
+        const othersExpensesData = expenses.filter(exp => {
+          const expDate = new Date(exp.expense_date).toISOString().split('T')[0];
+          return expDate === dateStr && exp.created_by !== user.id && exp.user_id === user.id;
+        });
+
+        setMyExpenses(myExpensesData);
+        setOthersExpenses(othersExpensesData);
+      } else {
+        const { data, error } = await supabase
+          .from("settlements")
+          .select("*")
+          .or(`paid_by.eq.${user.id},paid_to.eq.${user.id}`)
+          .gte("created_at", `${dateStr}T00:00:00`)
+          .lte("created_at", `${dateStr}T23:59:59`);
+
+        if (error) throw error;
+        setSettlements(data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching day data:", error);
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  const hasActivityOnDate = (day: number) => {
+    const checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    const dateStr = checkDate.toISOString().split('T')[0];
+    
+    return expenses.some(exp => {
+      const expDate = new Date(exp.expense_date).toISOString().split('T')[0];
+      return expDate === dateStr;
+    });
   };
 
   const handleManageMembers = (group: Group) => {
@@ -139,42 +213,56 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
   const maxExpense = monthlyExpenses.length > 0 ? Math.max(...monthlyExpenses) : 1;
   const activeGroups = groups.length;
 
+  // Calendar helpers
+  const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+  const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  const previousMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
+  const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
+  const selectDate = (day: number) => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
+
+  const isToday = (day: number) => {
+    const today = new Date();
+    return day === today.getDate() && currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear();
+  };
+
+  const isSelected = (day: number) => {
+    if (!selectedDate) return false;
+    return day === selectedDate.getDate() && currentDate.getMonth() === selectedDate.getMonth() && currentDate.getFullYear() === selectedDate.getFullYear();
+  };
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header Section */}
+    <div className="space-y-4 max-w-7xl mx-auto">
+      {/* Header Section - Minimal padding */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex flex-col gap-2"
+        className="flex flex-col gap-1"
       >
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Welcome back, <span className="text-teal-600 font-extrabold">{userName}</span>
-          </h1>
-          <p className="text-sm text-gray-500 mt-2">Track expenses and settle balances effortlessly</p>
-        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+          Welcome back, <span className="text-teal-600 font-extrabold">{userName}</span>
+        </h1>
+        <p className="text-sm text-gray-500">Track expenses and settle balances effortlessly</p>
       </motion.div>
 
-      {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+      {/* Main Grid Layout - Compact spacing */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Left Column - Main Content (2 columns) */}
+        <div className="lg:col-span-2 space-y-4">
           {/* Payment Goal Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 p-8 text-white shadow-xl hover:shadow-2xl transition-shadow"
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 p-6 text-white shadow-xl hover:shadow-2xl transition-shadow"
           >
             <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20" />
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16" />
-
-            <div className="relative z-10 flex items-start justify-between mb-12">
+            <div className="relative z-10 flex items-start justify-between mb-8">
               <div>
-                <p className="text-emerald-50/70 text-xs font-semibold tracking-widest mb-1">
-                  YOUR NET BALANCE
-                </p>
+                <p className="text-emerald-50/70 text-xs font-semibold tracking-widest mb-1">YOUR NET BALANCE</p>
                 <h2 className="text-2xl font-bold">Balance Overview</h2>
               </div>
               <motion.div 
@@ -184,31 +272,19 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
                 <Wallet className="h-6 w-6" />
               </motion.div>
             </div>
-
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div>
-                <p className="text-emerald-50/60 text-xs font-semibold tracking-widest mb-2">
-                  NET BALANCE
-                </p>
-                <p className="text-5xl font-bold tracking-tight">
-                  ₹{(totalOwed - totalOwe).toFixed(2)}
-                </p>
+                <p className="text-emerald-50/60 text-xs font-semibold tracking-widest mb-2">NET BALANCE</p>
+                <p className="text-5xl font-bold tracking-tight">₹{(totalOwed - totalOwe).toFixed(2)}</p>
               </div>
-
               <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    "w-3 h-3 rounded-full",
-                    (totalOwed - totalOwe) >= 0 ? "bg-green-300" : "bg-yellow-300"
-                  )}
-                />
+                <div className={cn("w-3 h-3 rounded-full", (totalOwed - totalOwe) >= 0 ? "bg-green-300" : "bg-yellow-300")} />
                 <p className="text-emerald-50/80 text-sm font-medium">
                   {(totalOwed - totalOwe) >= 0 ? "You're owed overall" : "You owe overall"}
                 </p>
               </div>
             </div>
-
-            <div className="mt-8 flex gap-3">
+            <div className="mt-6 flex gap-3">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   size="sm"
@@ -233,7 +309,6 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
               iconBg="bg-gradient-to-r from-[#ef473a] to-[#cb2d3e]"
               delay={0.2}
             />
-
             <StatCard
               title="Expenses"
               value={String(expenses.length)}
@@ -245,232 +320,41 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
             />
           </div>
 
-          {/* Monthly Chart & Expense Stats */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {/* Chart Section - 60% */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-              className="xl:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-shadow p-6"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Monthly Expenses</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Last 6 months trend</p>
-                </div>
-                <Button variant="ghost" size="sm" className="text-xs rounded-lg hover:bg-gray-100">
-                  <Eye className="h-3 w-3 mr-1" />
-                  View
-                </Button>
-              </div>
-
-              {/* Dynamic Chart Container with proper height */}
-              <div className="flex items-end justify-between gap-2 h-64 bg-gray-50 rounded-xl p-6">
-                {monthlyExpenses.map((amount, i) => {
-                  const height = maxExpense > 0 ? (amount / maxExpense) * 100 : 0;
-                  const months = ["6M", "5M", "4M", "3M", "2M", "1M"];
-                  const isLastBar = i === monthlyExpenses.length - 1;
-                  const isHovered = hoveredIndex === i;
-
-                  return (
-                    <div 
-                      key={i} 
-                      className="flex-1 flex flex-col items-center justify-end h-full gap-2"
-                      onMouseEnter={() => setHoveredIndex(i)}
-                      onMouseLeave={() => setHoveredIndex(null)}
-                    >
-                      {/* Show amount on hover */}
-                      {isHovered && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="text-xs font-bold text-teal-600"
-                        >
-                          ₹{amount.toFixed(0)}
-                        </motion.div>
-                      )}
-
-                      {/* Bar */}
-                      <motion.div
-                        className={cn(
-                          "w-full rounded-lg transition-all cursor-pointer",
-                          isLastBar
-                            ? "bg-gradient-to-t from-teal-500 to-teal-400 shadow-md"
-                            : isHovered
-                            ? "bg-gray-300"
-                            : "bg-gray-200"
-                        )}
-                        style={{ height: `${Math.max(height, 8)}%` }}
-                        whileHover={{ y: -4 }}
-                        initial={{ height: 0 }}
-                        animate={{ height: `${Math.max(height, 8)}%` }}
-                        transition={{ duration: 0.6, delay: i * 0.05 }}
-                      />
-
-                      {/* Month Label */}
-                      <span className="text-xs text-gray-500 font-medium">
-                        {months[i]}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-
-            {/* Expense Stats Card - 40% */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="xl:col-span-1"
-            >
-              <div className="rounded-2xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
-                {/* Emerald Container - Main Section */}
-                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-5 md:px-6 py-6 md:py-8 text-white rounded-2xl m-1">
-                  <div className="space-y-3">
-                    {/* Header */}
-                    <div>
-                      <p className="text-emerald-100 text-[8px] md:text-[9px] font-semibold tracking-wider mb-0.5">
-                        EXPENSE SUMMARY
-                      </p>
-                      <h3 className="text-lg md:text-xl font-bold text-white">This Month</h3>
-                    </div>
-
-                    {/* Total Expense - Dynamic */}
-                    <div className="space-y-1.5">
-                      <p className="text-emerald-100 text-[8px] md:text-[9px] font-semibold tracking-wider">
-                        TOTAL EXPENSES
-                      </p>
-                      <div className="flex justify-between items-center gap-2">
-                        <p className="text-xl md:text-2xl font-bold text-white">
-                          ₹{(monthlyExpenses[monthlyExpenses.length - 1] || 0).toFixed(2)}
-                        </p>
-                        <p className="text-[8px] md:text-[9px] text-emerald-100/80">
-                          {expenses.length} txn
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Settled Amount - Dynamic */}
-                    <div className="space-y-1.5">
-                      <p className="text-emerald-100 text-[8px] md:text-[9px] font-semibold tracking-wider">
-                        SETTLED AMOUNT
-                      </p>
-                      <div className="flex justify-between items-center gap-2">
-                        <p className="text-xl md:text-2xl font-bold text-white">
-                          ₹{totalOwe.toFixed(2)}
-                        </p>
-                        <p className="text-[8px] md:text-[9px] text-emerald-100/80">
-                          This month
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Section - White Background */}
-                <div className="p-4 md:p-5 space-y-2.5 bg-white">
-                  {/* Personal Breakdown - Dynamic Calculation */}
-                  <div className="space-y-2">
-                    <p className="text-gray-700 text-[8px] md:text-[9px] font-bold tracking-wider uppercase">
-                      Personal Breakdown
-                    </p>
-                    
-                    {/* Calculate user's personal expense percentage */}
-                    {(() => {
-                      const currentMonthTotal = monthlyExpenses[monthlyExpenses.length - 1] || 0;
-                      const userExpenses = expenses
-                        .filter(exp => {
-                          const expDate = new Date(exp.expense_date);
-                          const now = new Date();
-                          return expDate.getMonth() === now.getMonth() && 
-                                 expDate.getFullYear() === now.getFullYear();
-                        })
-                        .reduce((sum, exp) => sum + exp.amount, 0);
-                      
-                      const percentage = currentMonthTotal > 0 
-                        ? (userExpenses / currentMonthTotal) * 100 
-                        : 0;
-
-                      return (
-                        <>
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs md:text-sm text-gray-700 font-medium">Your Expenses</p>
-                            <p className="text-sm md:text-base font-bold text-emerald-600">
-                              ₹{userExpenses.toFixed(2)}
-                            </p>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${percentage}%` }}
-                              transition={{ delay: 0.6, duration: 0.8 }}
-                              className="h-full bg-emerald-500 rounded-full"
-                            />
-                          </div>
-                          <p className="text-[10px] text-gray-500">{percentage.toFixed(1)}% of total</p>
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
+          {/* Calendar Activity Section - NEW */}
+         
           {/* Recent Expenses */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-shadow p-6"
+            className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5"
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">
-                  Recent Expenses
-                </h3>
-                <p className="text-xs text-gray-500 mt-1">Last transactions</p>
+                <h3 className="text-base font-bold text-gray-900">Recent Expenses</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Last transactions</p>
               </div>
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setAddExpenseOpen(true)}
-                  className="h-10 w-10 p-0 rounded-lg hover:bg-gray-100"
-                >
-                  <Plus className="h-5 w-5" />
-                </Button>
-              </motion.div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setAddExpenseOpen(true)}
+                className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
-
             {expenses.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="p-3 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 mb-3"
-                >
-                  <IndianRupee className="h-8 w-8 text-gray-400" />
-                </motion.div>
-                <h4 className="font-semibold text-gray-900 mb-1">
-                  No expenses yet
-                </h4>
-                <p className="text-xs text-gray-500 mb-4">
-                  Start tracking by adding your first expense
-                </p>
-                <Button
-                  size="sm"
-                  onClick={() => setAddExpenseOpen(true)}
-                  className="rounded-lg bg-teal-500 hover:bg-teal-600"
-                >
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <IndianRupee className="h-8 w-8 text-gray-400 mb-2" />
+                <h4 className="font-semibold text-gray-900 mb-1 text-sm">No expenses yet</h4>
+                <p className="text-xs text-gray-500 mb-3">Start tracking by adding your first expense</p>
+                <Button size="sm" onClick={() => setAddExpenseOpen(true)} className="rounded-lg bg-teal-500 hover:bg-teal-600">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Expense
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {expenses.slice(0, 4).map((expense, i) => (
                   <ExpenseCard
                     key={expense.id}
@@ -482,51 +366,210 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
                 ))}
               </div>
             )}
-
-            {expenses.length > 4 && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="flex justify-center pt-4 mt-2 border-t border-gray-100"
-              >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-lg text-xs font-medium gap-1 hover:bg-gray-50"
-                >
-                  View All Expenses
-                  <ArrowDownRight className="h-3 w-3" />
-                </Button>
-              </motion.div>
-            )}
           </motion.div>
+           <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Mini Calendar */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-teal-600" />
+                    <h3 className="font-bold text-gray-900 text-sm">
+                      {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button onClick={previousMonth} className="p-1 rounded hover:bg-gray-100">
+                      <ChevronLeft className="h-4 w-4 text-gray-600" />
+                    </button>
+                    <button onClick={nextMonth} className="p-1 rounded hover:bg-gray-100">
+                      <ChevronRight className="h-4 w-4 text-gray-600" />
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Calendar Grid */}
+                <div className="space-y-1">
+                  <div className="grid grid-cols-7 gap-1">
+                    {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+                      <div key={day} className="text-center text-[9px] font-bold text-gray-500 uppercase">{day}</div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {Array.from({ length: firstDayOfMonth }).map((_, index) => (
+                      <div key={`empty-${index}`} className="aspect-square" />
+                    ))}
+                    {Array.from({ length: daysInMonth }).map((_, index) => {
+                      const day = index + 1;
+                      const hasActivity = hasActivityOnDate(day);
+                      const isTodayDate = isToday(day);
+                      const isSelectedDate = isSelected(day);
+
+                      return (
+                        <button
+                          key={day}
+                          onClick={() => selectDate(day)}
+                          className={cn(
+                            "aspect-square rounded-lg flex items-center justify-center text-xs font-semibold transition-all relative",
+                            isSelectedDate
+                              ? "bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-md"
+                              : isTodayDate
+                              ? "bg-emerald-100 text-emerald-700 border border-emerald-400"
+                              : hasActivity
+                              ? "bg-teal-50 text-teal-700 hover:bg-teal-100"
+                              : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                          )}
+                        >
+                          {day}
+                          {hasActivity && !isSelectedDate && (
+                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-teal-500" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Activity Panel */}
+              <div>
+                <div className="flex gap-1 p-1 bg-gray-100 rounded-lg mb-3">
+                  <button
+                    onClick={() => setViewMode("expenses")}
+                    className={cn(
+                      "flex-1 py-1.5 px-2 rounded text-xs font-semibold transition-all",
+                      viewMode === "expenses"
+                        ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow"
+                        : "text-gray-600"
+                    )}
+                  >
+                    Expenses
+                  </button>
+                  <button
+                    onClick={() => setViewMode("settlements")}
+                    className={cn(
+                      "flex-1 py-1.5 px-2 rounded text-xs font-semibold transition-all",
+                      viewMode === "settlements"
+                        ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow"
+                        : "text-gray-600"
+                    )}
+                  >
+                    Settlements
+                  </button>
+                </div>
+
+                <div className="h-[240px] overflow-y-auto custom-scrollbar">
+                  {!selectedDate ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center">
+                      <Calendar className="h-10 w-10 text-gray-300 mb-2" />
+                      <p className="text-xs font-semibold text-gray-900">No Date Selected</p>
+                      <p className="text-[10px] text-gray-500">Select a date to view activities</p>
+                    </div>
+                  ) : calendarLoading ? (
+                    <div className="space-y-2">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="animate-pulse h-16 bg-gray-100 rounded-lg" />
+                      ))}
+                    </div>
+                  ) : viewMode === "expenses" ? (
+                    <div className="space-y-2">
+                      {myExpenses.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-bold text-gray-600 mb-1">My Expenses</p>
+                          {myExpenses.map((expense) => (
+                            <div key={expense.id} className="p-2 bg-teal-50  mb-1">
+                              <div className="flex justify-between items-center">
+                                <p className="text-xs font-semibold text-gray-900 truncate flex-1">{expense.title}</p>
+                                <p className="text-xs font-bold text-teal-600">₹{expense.amount.toFixed(2)}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {othersExpenses.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-bold text-gray-600 mb-1">Others' Expenses</p>
+                          {othersExpenses.map((expense) => (
+                            <div key={expense.id} className="p-2 bg-emerald-50 border  mb-1">
+                              <div className="flex justify-between items-center">
+                                <p className="text-xs font-semibold text-gray-900 truncate flex-1">{expense.title}</p>
+                                <p className="text-xs font-bold text-emerald-600">₹{expense.amount.toFixed(2)}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {myExpenses.length === 0 && othersExpenses.length === 0 && (
+                        <div className="flex flex-col items-center justify-center h-full text-center">
+                          <Receipt className="h-10 w-10 text-gray-300 mb-2" />
+                          <p className="text-xs font-semibold text-gray-900">No Expenses</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {settlements.length > 0 ? (
+                        settlements.map((settlement) => (
+                          <div
+                            key={settlement.id}
+                            className={cn(
+                              "p-2 rounded-lg border",
+                              settlement.paid_by === user.id ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200"
+                            )}
+                          >
+                            <div className="flex justify-between items-center">
+                              <p className="text-xs font-semibold text-gray-900">
+                                {settlement.paid_by === user.id ? "You paid" : "You received"}
+                              </p>
+                              <p className={cn("text-xs font-bold", settlement.paid_by === user.id ? "text-rose-600" : "text-emerald-600")}>
+                                ₹{settlement.amount.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-center">
+                          <IndianRupee className="h-10 w-10 text-gray-300 mb-2" />
+                          <p className="text-xs font-semibold text-gray-900">No Settlements</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
         </div>
 
-        {/* Right Sidebar */}
-        <div className="space-y-6">
+        {/* Right Sidebar (1 column) */}
+        <div className="space-y-4">
           {/* Your Wallet */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-shadow p-6"
+            className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5"
           >
-            <div className="mb-6">
-              <h3 className="font-bold text-gray-900 text-lg">Your Wallet</h3>
-              <p className="text-xs text-gray-500 mt-1">Click to flip and see details</p>
+            <div className="mb-4">
+              <h3 className="font-bold text-gray-900 text-base">Your Wallet</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Click to flip and see details</p>
             </div>
-
             <motion.div 
               onClick={() => setWalletFlipped(!walletFlipped)}
               animate={{ rotateY: walletFlipped ? 180 : 0 }}
               transition={{ duration: 0.6 }}
               style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
-              className={walletFlipped 
-                  ? "p-6 rounded-2xl text-white shadow-xl hover:shadow-2xl mb-5 cursor-pointer min-h-[220px] flex flex-col justify-between relative bg-gradient-to-r from-[#ef473a] to-[#cb2d3e] border border-red-400/30 transition-all"
-                  : "p-6 rounded-2xl text-white shadow-xl hover:shadow-2xl mb-5 cursor-pointer min-h-[220px] flex flex-col justify-between relative bg-gradient-to-br from-teal-500 to-emerald-600 border border-emerald-400/30 transition-all"
-              }
-              whileHover={{ scale: 1.05 }}
+              className={cn(
+                "p-5 rounded-2xl text-white shadow-xl hover:shadow-2xl mb-4 cursor-pointer min-h-[200px] flex flex-col justify-between relative transition-all",
+                walletFlipped ? "bg-gradient-to-r from-[#ef473a] to-[#cb2d3e]" : "bg-gradient-to-br from-teal-500 to-emerald-600"
+              )}
+              whileHover={{ scale: 1.02 }}
             >
               {!walletFlipped ? (
                 <>
@@ -537,26 +580,17 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
                     </div>
                     <CreditCard className="h-5 w-5 opacity-60" />
                   </div>
-
-                  <div className="mt-auto">
-                    <p className="text-4xl font-bold tracking-tight">
-                      ₹{totalOwed.toFixed(2)}
-                    </p>
-                    <p className="text-xs opacity-70 mt-3">
-                      {balances.filter((b) => b.amount > 0).length} people owe you
-                    </p>
+                  <div>
+                    <p className="text-4xl font-bold tracking-tight">₹{totalOwed.toFixed(2)}</p>
+                    <p className="text-xs opacity-70 mt-2">{balances.filter((b) => b.amount > 0).length} people owe you</p>
                   </div>
-
-                  <div className="flex items-end justify-between mt-6 pt-4 border-t border-white/20">
+                  <div className="flex items-end justify-between pt-3 border-t border-white/20">
                     <span className="text-xs font-semibold opacity-70">SPLITXO</span>
                     <span className="text-xs opacity-60">Click to flip</span>
                   </div>
                 </>
               ) : (
-                <div 
-                  style={{ transform: "rotateY(180deg)" }}
-                  className="flex flex-col justify-between h-full"
-                >
+                <div style={{ transform: "rotateY(180deg)" }} className="flex flex-col justify-between h-full">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-xs font-semibold opacity-70 tracking-widest mb-1">PAYABLE</p>
@@ -564,196 +598,132 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
                     </div>
                     <CreditCard className="h-5 w-5 opacity-60" />
                   </div>
-
-                  <div className="mt-auto">
-                    <p className="text-4xl font-bold tracking-tight">
-                      ₹{totalOwe.toFixed(2)}
-                    </p>
-                    <p className="text-xs opacity-70 mt-3">
-                      {balances.filter((b) => b.amount < 0).length} people waiting
-                    </p>
+                  <div>
+                    <p className="text-4xl font-bold tracking-tight">₹{totalOwe.toFixed(2)}</p>
+                    <p className="text-xs opacity-70 mt-2">{balances.filter((b) => b.amount < 0).length} people waiting</p>
                   </div>
-
-                  <div className="flex items-end justify-between mt-6 pt-4 border-t border-white/20">
+                  <div className="flex items-end justify-between pt-3 border-t border-white/20">
                     <span className="text-xs font-semibold opacity-70">SPLITXO</span>
                     <span className="text-xs opacity-60">Click to flip</span>
                   </div>
                 </div>
               )}
             </motion.div>
-
-            {/* Dynamic Buttons Based on Flip State */}
-            {!walletFlipped ? (
-              <div className="space-y-2">
-                {/* Receivable Side - Green Buttons */}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setAddExpenseOpen(true)}
-                  style={{ 
-                    background: "linear-gradient(to bottom right, rgb(16, 185, 129), rgb(5, 150, 105))"
-                  }}
-                  className="w-full rounded-lg text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all py-2.5 flex items-center justify-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Expense
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setCreateGroupOpen(true)}
-                  style={{ 
-                    background: "linear-gradient(to bottom right, rgb(16, 185, 129), rgb(20, 184, 166))"
-                  }}
-                  className="w-full rounded-lg text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all py-2.5 flex items-center justify-center gap-2"
-                >
-                  <Users className="h-4 w-4" />
-                  Create Group
-                </motion.button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {/* Payable Side - Red Buttons */}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    const negativeBalance = balances.find((b) => b.amount < 0);
-                    if (negativeBalance) {
-                      handleSettle(negativeBalance);
-                    }
-                  }}
-                  style={{ 
-                    background: "linear-gradient(to right, rgb(239, 68, 68), rgb(220, 38, 38))"
-                  }}
-                  className="w-full rounded-lg text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all py-2.5 flex items-center justify-center gap-2"
-                >
-                  <Send className="h-4 w-4" />
-                  Settle Payment
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setAddExpenseOpen(true)}
-                  style={{ 
-                    background: "linear-gradient(to right, rgb(239, 68, 68), rgb(220, 38, 38))"
-                  }}
-                  className="w-full rounded-lg text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all py-2.5 flex items-center justify-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Expense
-                </motion.button>
-              </div>
-            )}
+            <div className="space-y-2">
+              {!walletFlipped ? (
+                <>
+                  <button
+                    onClick={() => setAddExpenseOpen(true)}
+                    className="w-full rounded-lg text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all py-2.5 flex items-center justify-center gap-2"
+                    style={{ background: "linear-gradient(to bottom right, rgb(16, 185, 129), rgb(5, 150, 105))" }}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Expense
+                  </button>
+                  <button
+                    onClick={() => setCreateGroupOpen(true)}
+                    className="w-full rounded-lg text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all py-2.5 flex items-center justify-center gap-2"
+                    style={{ background: "linear-gradient(to bottom right, rgb(16, 185, 129), rgb(20, 184, 166))" }}
+                  >
+                    <Users className="h-4 w-4" />
+                    Create Group
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      const negativeBalance = balances.find((b) => b.amount < 0);
+                      if (negativeBalance) handleSettle(negativeBalance);
+                    }}
+                    className="w-full rounded-lg text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all py-2.5 flex items-center justify-center gap-2"
+                    style={{ background: "linear-gradient(to right, rgb(239, 68, 68), rgb(220, 38, 38))" }}
+                  >
+                    <Send className="h-4 w-4" />
+                    Settle Payment
+                  </button>
+                  <button
+                    onClick={() => setAddExpenseOpen(true)}
+                    className="w-full rounded-lg text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all py-2.5 flex items-center justify-center gap-2"
+                    style={{ background: "linear-gradient(to right, rgb(239, 68, 68), rgb(220, 38, 38))" }}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Expense
+                  </button>
+                </>
+              )}
+            </div>
           </motion.div>
 
-          {/* Your Balances - Flip Card */}
+          {/* Balances */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-shadow p-6"
+            className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5"
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-gray-900">Balances</h3>
-              <span className="text-xs text-gray-500">
-                {balances.length} {balances.length === 1 ? "person" : "people"}
-              </span>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-gray-900 text-sm">Balances</h3>
+              <span className="text-xs text-gray-500">{balances.length} {balances.length === 1 ? "person" : "people"}</span>
             </div>
-
             {balances.length === 0 ? (
-              <div className="text-center py-8">
+              <div className="text-center py-6">
                 <Users className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                 <p className="text-xs text-gray-500">No balances yet</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {balances.slice(0, 4).map((balance, i) => {
                   const isFlipped = flippedCards.has(balance.userId);
                   return (
-                    <motion.div
-                      key={balance.userId}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      onClick={() => toggleFlip(balance.userId)}
-                      className="cursor-pointer"
-                      style={{ perspective: "1000px" }}
-                    >
+                    <div key={balance.userId} onClick={() => toggleFlip(balance.userId)} className="cursor-pointer" style={{ perspective: "1000px" }}>
                       <motion.div
                         animate={{ rotateY: isFlipped ? 180 : 0 }}
                         transition={{ duration: 0.6 }}
                         style={{ transformStyle: "preserve-3d" }}
                         className={cn(
-                          "p-4 rounded-xl transition-all border-2 min-h-[110px] flex items-center justify-between shadow-md hover:shadow-lg",
-                          balance.amount < 0
-                            ? "bg-rose-50 border-rose-200 hover:border-rose-300"
-                            : "bg-teal-50 border-teal-200 hover:border-teal-300"
+                          "p-3 rounded-xl border-2 min-h-[90px] flex items-center justify-between shadow-md",
+                          balance.amount < 0 ? "bg-rose-50 border-rose-200" : "bg-teal-50 border-teal-200"
                         )}
                       >
                         {!isFlipped ? (
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900">
-                              {balance.userName}
-                            </p>
-                            <p className="text-[11px] text-gray-500 truncate">
-                              {balance.userEmail}
-                            </p>
-                            <div className="flex items-center gap-0.5 mt-1">
-                              <p
-                                className={cn(
-                                  "text-xs font-medium",
-                                  balance.amount > 0 ? "text-teal-600" : "text-rose-600"
-                                )}
-                              >
-                                {balance.amount > 0 ? "Owed" : "Owes"}
-                              </p>
-                              <IndianRupee className="h-3 w-3" />
-                              <p
-                                className={cn(
-                                  "text-xs font-semibold",
-                                  balance.amount > 0 ? "text-teal-600" : "text-rose-600"
-                                )}
-                              >
-                                {Math.abs(balance.amount).toFixed(2)}
-                              </p>
+                          <>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 truncate">{balance.userName}</p>
+                              <p className="text-[10px] text-gray-500 truncate">{balance.userEmail}</p>
+                              <div className="flex items-center gap-0.5 mt-1">
+                                <p className={cn("text-xs font-medium", balance.amount > 0 ? "text-teal-600" : "text-rose-600")}>
+                                  {balance.amount > 0 ? "Owed" : "Owes"}
+                                </p>
+                                <IndianRupee className="h-3 w-3" />
+                                <p className={cn("text-xs font-semibold", balance.amount > 0 ? "text-teal-600" : "text-rose-600")}>
+                                  {Math.abs(balance.amount).toFixed(2)}
+                                </p>
+                              </div>
                             </div>
-                          </div>
+                            {balance.amount < 0 && (
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSettle(balance);
+                                }}
+                                className="rounded-lg bg-gradient-to-r from-[#ef473a] to-[#cb2d3e] text-white text-xs h-7"
+                              >
+                                Pay
+                              </Button>
+                            )}
+                          </>
                         ) : (
-                          <div 
-                            style={{ transform: "rotateY(180deg)" }}
-                            className="w-full text-center"
-                          >
-                            <p className="text-xs text-gray-500 mb-1">
-                              {balance.amount < 0 ? "You owe" : "They owe you"}
-                            </p>
-                            <p className={cn(
-                              "text-2xl font-bold",
-                              balance.amount > 0 ? "text-teal-600" : "text-rose-600"
-                            )}>
+                          <div style={{ transform: "rotateY(180deg)" }} className="w-full text-center">
+                            <p className="text-xs text-gray-500 mb-1">{balance.amount < 0 ? "You owe" : "They owe you"}</p>
+                            <p className={cn("text-2xl font-bold", balance.amount > 0 ? "text-teal-600" : "text-rose-600")}>
                               ₹{Math.abs(balance.amount).toFixed(2)}
                             </p>
                           </div>
                         )}
-
-                        {balance.amount < 0 && !isFlipped && (
-                          <Button
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSettle(balance);
-                            }}
-                            className="rounded-lg bg-gradient-to-r from-[#ef473a] to-[#cb2d3e] text-white text-xs"
-                          >
-                            Pay
-                          </Button>
-                        )}
-
-                        {balance.amount > 0 && !isFlipped && (
-                          <ArrowDownRight className="h-4 w-4 text-teal-600" />
-                        )}
                       </motion.div>
-                    </motion.div>
+                    </div>
                   );
                 })}
               </div>
@@ -765,51 +735,29 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-shadow p-6"
+            className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5"
           >
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-2">
-                <p className="text-lg font-bold text-gray-900">Active Groups</p>
-                <span className="bg-teal-100 text-teal-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                  {activeGroups}
-                </span>
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-base font-bold text-gray-900">Active Groups</p>
+                <span className="bg-teal-100 text-teal-700 text-xs font-semibold px-2 py-0.5 rounded-full">{activeGroups}</span>
               </div>
-              <p className="text-xs text-gray-500 mb-3">Total amount owed to you</p>
-              <p className="text-4xl font-bold text-gray-900">
-                ₹{totalOwed.toFixed(2)}
-              </p>
+              <p className="text-xs text-gray-500 mb-2">Total amount owed to you</p>
+              <p className="text-3xl font-bold text-gray-900">₹{totalOwed.toFixed(2)}</p>
             </div>
-
-            <div className="border-t border-gray-100 my-6" />
-
+            <div className="border-t border-gray-100 my-4" />
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="font-bold text-gray-900 text-sm">All Groups</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Manage your groups</p>
-                </div>
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setCreateGroupOpen(true)}
-                    className="h-8 w-8 p-0 rounded-lg hover:bg-gray-100"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </motion.div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-gray-900 text-sm">All Groups</h3>
+                <Button variant="ghost" size="sm" onClick={() => setCreateGroupOpen(true)} className="h-7 w-7 p-0 rounded-lg">
+                  <Plus className="h-4 w-4" />
+                </Button>
               </div>
-
               {groups.length === 0 ? (
-                <div className="text-center py-6">
+                <div className="text-center py-4">
                   <Users className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-xs text-gray-500 mb-3">No groups yet</p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="rounded-lg w-full"
-                    onClick={() => setCreateGroupOpen(true)}
-                  >
+                  <p className="text-xs text-gray-500 mb-2">No groups yet</p>
+                  <Button size="sm" variant="outline" className="rounded-lg w-full text-xs" onClick={() => setCreateGroupOpen(true)}>
                     Create Group
                   </Button>
                 </div>
@@ -817,67 +765,46 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-0">
                     {groups.slice(0, 4).map((group, idx) => (
-                      <motion.div
+                      <div
                         key={`${group.id}-avatar`}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: idx * 0.1 }}
                         style={{ marginLeft: idx > 0 ? "-12px" : "0" }}
-                        className="h-10 w-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow-md cursor-pointer hover:shadow-lg transition-shadow hover:z-10 hover:scale-110"
+                        className="h-10 w-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow-md cursor-pointer hover:scale-110 transition-transform"
                         title={group.name}
                         onClick={() => handleManageMembers(group)}
-                        whileHover={{ scale: 1.15 }}
                       >
                         {group.name.substring(0, 2).toUpperCase()}
-                      </motion.div>
+                      </div>
                     ))}
                     {groups.length > 4 && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.4 }}
+                      <div
                         style={{ marginLeft: "-12px" }}
-                        className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold border-2 border-white shadow-md cursor-pointer hover:shadow-lg transition-all hover:scale-110"
-                        onClick={() => window.location.href = "/groups"}
-                        whileHover={{ scale: 1.15 }}
+                        className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold border-2 border-white shadow-md cursor-pointer"
                       >
                         +{groups.length - 4}
-                      </motion.div>
+                      </div>
                     )}
                   </div>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      window.location.href = "/groups";
-                    }}
-                    className="h-10 w-10 rounded-full bg-teal-500 hover:bg-teal-600 flex items-center justify-center text-white shadow-md hover:shadow-lg transition-all"
+                  <button
+                    onClick={() => { window.location.href = "/groups"; }}
+                    className="h-10 w-10 rounded-full bg-teal-500 hover:bg-teal-600 flex items-center justify-center text-white shadow-md"
                   >
                     <ArrowUpRight className="h-5 w-5" />
-                  </motion.button>
+                  </button>
                 </div>
               )}
             </div>
-           
           </motion.div>
+
           <StatsExpandCard 
-  userId={user.id} 
-  totalGroups={groups.length}
-  allExpenses={expenses}
-/>
-       
-          
-          
+            userId={user.id} 
+            totalGroups={groups.length}
+            allExpenses={expenses}
+          />
         </div>
-        
       </div>
 
       {/* Modals */}
-      <CreateGroupModal
-        isOpen={createGroupOpen}
-        onClose={() => setCreateGroupOpen(false)}
-        onSubmit={createGroup}
-      />
+      <CreateGroupModal isOpen={createGroupOpen} onClose={() => setCreateGroupOpen(false)} onSubmit={createGroup} />
       <AddExpenseModal
         isOpen={addExpenseOpen}
         onClose={() => setAddExpenseOpen(false)}
@@ -907,35 +834,29 @@ export function DashboardHome({ user = { user_metadata: { full_name: "User" }, i
         groups={groups}
         onSubmit={handleSettleSubmit}
       />
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #14b8a6;
+          border-radius: 10px;
+        }
+      `}</style>
     </div>
   );
 }
 
-function StatCard({
-  title,
-  value,
-  subtitle,
-  icon: Icon,
-  color = "emerald",
-  iconBg,
-  delay,
-}: StatCardProps) {
+function StatCard({ title, value, subtitle, icon: Icon, color = "emerald", iconBg, delay }: StatCardProps) {
   const colorStyles: Record<StatColor, string> = {
-    rose: `
-      bg-white border-gray-200
-      hover:bg-rose-50/60
-      hover:border-rose-300
-    `,
-    emerald: `
-      bg-white border-gray-200
-      hover:bg-emerald-50/60
-      hover:border-emerald-300
-    `,
-    blue: `
-      bg-white border-gray-200
-      hover:bg-blue-50/60
-      hover:border-blue-300
-    `,
+    rose: "bg-white border-gray-200 hover:bg-rose-50/60 hover:border-rose-300",
+    emerald: "bg-white border-gray-200 hover:bg-emerald-50/60 hover:border-emerald-300",
+    blue: "bg-white border-gray-200 hover:bg-blue-50/60 hover:border-blue-300",
   };
 
   const iconFallbackStyles: Record<StatColor, string> = {
@@ -949,31 +870,17 @@ function StatCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className={cn(
-        "rounded-2xl border p-5 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]",
-        colorStyles[color]
-      )}
+      className={cn("rounded-2xl border p-4 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]", colorStyles[color])}
     >
-      <div
-        className={cn(
-          "p-2.5 rounded-lg w-fit mb-3 text-white",
-          iconBg ?? iconFallbackStyles[color]
-        )}
-      >
+      <div className={cn("p-2 rounded-lg w-fit mb-2 text-white", iconBg ?? iconFallbackStyles[color])}>
         <Icon className="h-4 w-4" />
       </div>
-
-      <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">
-        {title}
-      </p>
-
+      <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">{title}</p>
       <p className="text-2xl font-bold text-gray-900">{value}</p>
-
       <p className="text-xs text-gray-600 mt-1">{subtitle}</p>
     </motion.div>
   );
 }
-
 
 
 

@@ -398,6 +398,7 @@ export type ExpenseCategory =
   | "other";
 
 export interface Expense {
+  user_id: string;
   description: ReactNode;
   date: string | number | Date;
   id: string;
